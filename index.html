@@ -491,11 +491,20 @@
           throw new Error("Failed to create realtime session.");
         }
 
-        const ephemeralKey = sessionData.client_secret && sessionData.client_secret.value;
-        if (!ephemeralKey) {
-          console.error(sessionData);
-          throw new Error("No client secret returned from backend.");
-        }
+ console.log("Session data from backend:", sessionData);
+
+const ephemeralKey =
+  (sessionData.client_secret && sessionData.client_secret.value) ||
+  sessionData.client_secret ||
+  sessionData.value ||
+  null;
+
+if (!ephemeralKey) {
+  console.error(sessionData);
+  throw new Error("No client secret returned from backend: " + JSON.stringify(sessionData));
+}
+        
+      
 
         pc = new RTCPeerConnection();
 
