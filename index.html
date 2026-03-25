@@ -181,7 +181,21 @@
           </select>
         </div>
       </div>
-
+<div>
+  <label for="voiceType">Voice</label>
+  <select id="voiceType">
+    <option value="cedar" selected>Cedar</option>
+    <option value="marin">Marin</option>
+    <option value="ash">Ash</option>
+    <option value="coral">Coral</option>
+    <option value="alloy">Alloy</option>
+    <option value="echo">Echo</option>
+    <option value="sage">Sage</option>
+    <option value="shimmer">Shimmer</option>
+    <option value="verse">Verse</option>
+    <option value="ballad">Ballad</option>
+  </select>
+</div>
       <div style="margin-top:10px">
         <label for="mode">Mode</label>
         <select id="mode">
@@ -311,8 +325,9 @@
     const payload = {
       leadType: document.getElementById("leadType").value,
       difficulty: document.getElementById("difficulty").value,
-      mode: document.getElementById("mode").value
-    };
+      mode: document.getElementById("mode").value,
+      voice: document.getElementById("voiceType").value
+      };
 
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
