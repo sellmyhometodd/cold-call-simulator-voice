@@ -252,140 +252,95 @@
   </div>
 
   <script>
-    let currentScenario = null;
+let recognition;
+let speaking = false;
 
-    const transcript = document.getElementById("transcript");
-    const statusText = document.getElementById("statusText");
-    const statusDot = document.getElementById("statusDot");
-    const reviewSection = document.getElementById("reviewSection");
+function startVoice(){
 
-    function setStatus(mode) {
-      statusDot.className = "dot";
-      if (mode === "live") {
-        statusDot.classList.add("live");
-        statusText.textContent = "Live";
-      } else if (mode === "failed") {
-        statusText.textContent = "Failed";
-      } else {
-        statusText.textContent = "Idle";
-      }
-    }
+recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
-    function addLine(type, text) {
-      const div = document.createElement("div");
-      div.className = `line ${type}`;
-      div.textContent = text;
-      transcript.appendChild(div);
-      transcript.scrollTop = transcript.scrollHeight;
-    }
+recognition.continuous = true;
+recognition.interimResults = false;
 
-    function randomItem(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
+recognition.onresult = function(event){
 
-    function buildLocalScenario() {
-      const leadType = document.getElementById("leadType").value;
-      currentScenario = {
-        leadType,
-        disc: randomItem(["D","I","S","C"]),
-        frustration: randomItem(["Low","Medium","High"]),
-        motivation: randomItem(["Low","Medium","High"]),
-        mood: randomItem(["Calm","Skeptical","Defensive","Frustrated"]),
-        trustStart: 3,
-        trustEnd: 6,
-        defensiveStart: 7,
-        defensiveEnd: 5,
-        opennessStart: 2,
-        opennessEnd: 5
-      };
-    }
+const transcript = event.results[event.results.length-1][0].transcript;
 
-    async function startSession() {
-      reviewSection.classList.remove("show");
-      buildLocalScenario();
-      setStatus("live");
-      addLine("system", "Requesting microphone and contacting backend...");
+addLine("user", transcript);
 
-      const backendUrl = document.getElementById("backendUrl").value.trim();
-      const payload = {
-        leadType: document.getElementById("leadType").value,
-        difficulty: document.getElementById("difficulty").value,
-        mode: document.getElementById("mode").value
-      };
+handleCommand(transcript);
 
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        const res = await fetch(`${backendUrl}/session`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+};
 
-        const data = await res.json();
-        addLine("system", "Backend connected.");
-        addLine("ai", "Seller answers: Hello?");
-        addLine("coach", "Current backend is returning instructions only. Realtime voice wiring comes next.");
-        console.log(data);
-      } catch (err) {
-        console.error(err);
-        setStatus("failed");
-        addLine("coach", "Could not start session. Check mic permissions and backend URL.");
-      }
-    }
+recognition.start();
 
-    function endSession() {
-      setStatus("idle");
-      addLine("system", "Session ended.");
-      showReview();
-    }
+}
 
-    function showReview() {
-      if (!currentScenario) return;
-      reviewSection.classList.add("show");
+function handleCommand(text){
 
-      const scorecards = [
-        ["Opening", "7/10"],
-        ["Rapport", "6/10"],
-        ["Control", "7/10"],
-        ["Objection Handling", "6/10"],
-        ["Appointment Setting", "5/10"],
-        ["DISC Adaptation", "6/10"]
-      ];
+text = text.toLowerCase();
 
-      document.getElementById("scorecards").innerHTML = scorecards
-        .map(([k,v]) => `<div>${k}: <strong>${v}</strong></div>`)
-        .join("");
+if(text.includes("saber pause")){
+addLine("coach","Paused");
+}
 
-      document.getElementById("blindReveal").innerHTML = `
-        Lead Type: <strong>${currentScenario.leadType}</strong><br>
-        DISC: <strong>${currentScenario.disc}</strong><br>
-        Frustration: <strong>${currentScenario.frustration}</strong><br>
-        Motivation: <strong>${currentScenario.motivation}</strong><br>
-        Mood: <strong>${currentScenario.mood}</strong>
-      `;
+if(text.includes("saber coach")){
+addLine("coach","Try asking motivation and timeline");
+}
 
-      document.getElementById("stateChanges").innerHTML = `
-        Trust: <strong>${currentScenario.trustStart} → ${currentScenario.trustEnd}</strong><br>
-        Defensiveness: <strong>${currentScenario.defensiveStart} → ${currentScenario.defensiveEnd}</strong><br>
-        Openness: <strong>${currentScenario.opennessStart} → ${currentScenario.opennessEnd}</strong>
-      `;
-    }
+if(text.includes("saber resume")){
+addLine("coach","Resume conversation");
+}
 
-    document.getElementById("startBtn").addEventListener("click", startSession);
-    document.getElementById("endBtn").addEventListener("click", endSession);
-    document.getElementById("pauseBtn").addEventListener("click", () => addLine("coach", "Saber pause"));
-    document.getElementById("coachBtn").addEventListener("click", () => addLine("coach", "Saber coach"));
-    document.getElementById("resumeBtn").addEventListener("click", () => addLine("coach", "Saber resume"));
-    document.getElementById("scoreBtn").addEventListener("click", () => showReview());
-    document.getElementById("replayBtn").addEventListener("click", () => {
-      addLine("system", "Replaying same seller.");
-      reviewSection.classList.remove("show");
-    });
-    document.getElementById("newBtn").addEventListener("click", () => {
-      addLine("system", "Generating new random seller.");
-      reviewSection.classList.remove("show");
-      buildLocalScenario();
-    });
-  </script>
+if(text.includes("saber score")){
+showReview();
+}
+
+if(text.includes("saber end")){
+endSession();
+}
+
+respondAI(text);
+
+}
+
+function respondAI(text){
+
+const responses = [
+"Yes we've been thinking about selling",
+"We already tried that before",
+"I'm not sure we want another agent",
+"What makes you different",
+"We may just wait"
+];
+
+const reply = responses[Math.floor(Math.random()*responses.length)];
+
+setTimeout(()=>{
+addLine("ai", reply);
+speak(reply);
+},1000);
+
+}
+
+function speak(text){
+
+const speech = new SpeechSynthesisUtterance(text);
+
+speech.lang = "en-US";
+
+window.speechSynthesis.speak(speech);
+
+}
+
+document.getElementById("startBtn").addEventListener("click",()=>{
+
+startSession();
+
+startVoice();
+
+});
+
+</script>
 </body>
 </html>
