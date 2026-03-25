@@ -251,96 +251,306 @@
     </section>
   </div>
 
-  <script>
-let recognition;
-let speaking = false;
+<script>
+  let currentScenario = null;
+  let recognition = null;
 
-function startVoice(){
+  const transcript = document.getElementById("transcript");
+  const statusText = document.getElementById("statusText");
+  const statusDot = document.getElementById("statusDot");
+  const reviewSection = document.getElementById("reviewSection");
 
-recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  function setStatus(mode) {
+    statusDot.className = "dot";
+    if (mode === "live") {
+      statusDot.classList.add("live");
+      statusText.textContent = "Live";
+    } else if (mode === "failed") {
+      statusText.textContent = "Failed";
+    } else {
+      statusText.textContent = "Idle";
+    }
+  }
 
-recognition.continuous = true;
-recognition.interimResults = false;
+  function addLine(type, text) {
+    const div = document.createElement("div");
+    div.className = `line ${type}`;
+    div.textContent = text;
+    transcript.appendChild(div);
+    transcript.scrollTop = transcript.scrollHeight;
+  }
 
-recognition.onresult = function(event){
+  function randomItem(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
-const transcript = event.results[event.results.length-1][0].transcript;
+  function buildLocalScenario() {
+    const leadType = document.getElementById("leadType").value;
+    currentScenario = {
+      leadType,
+      disc: randomItem(["D","I","S","C"]),
+      frustration: randomItem(["Low","Medium","High"]),
+      motivation: randomItem(["Low","Medium","High"]),
+      mood: randomItem(["Calm","Skeptical","Defensive","Frustrated"]),
+      trustStart: 3,
+      trustEnd: 6,
+      defensiveStart: 7,
+      defensiveEnd: 5,
+      opennessStart: 2,
+      opennessEnd: 5
+    };
+  }
 
-addLine("user", transcript);
+  async function startSession() {
+    reviewSection.classList.remove("show");
+    buildLocalScenario();
+    setStatus("live");
+    addLine("system", "Requesting microphone and contacting backend...");
 
-handleCommand(transcript);
+    const backendUrl = document.getElementById("backendUrl").value.trim();
+    const payload = {
+      leadType: document.getElementById("leadType").value,
+      difficulty: document.getElementById("difficulty").value,
+      mode: document.getElementById("mode").value
+    };
 
-};
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
 
-recognition.start();
+      const res = await fetch(`${backendUrl}/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-}
+      const data = await res.json();
+      console.log(data);
 
-function handleCommand(text){
+      addLine("system", "Backend connected.");
+      addLine("ai", "Seller answers: Hello?");
+      speak("Hello?");
+      startVoiceRecognition();
 
-text = text.toLowerCase();
+    } catch (err) {
+      console.error(err);
+      setStatus("failed");
+      addLine("coach", "Could not start session. Check mic permissions and backend URL.");
+    }
+  }
 
-if(text.includes("saber pause")){
-addLine("coach","Paused");
-}
+  function endSession() {
+    setStatus("idle");
+    addLine("system", "Session ended.");
+    stopVoiceRecognition();
+    showReview();
+  }
 
-if(text.includes("saber coach")){
-addLine("coach","Try asking motivation and timeline");
-}
+  function showReview() {
+    if (!currentScenario) return;
+    reviewSection.classList.add("show");
 
-if(text.includes("saber resume")){
-addLine("coach","Resume conversation");
-}
+    const scorecards = [
+      ["Opening", "7/10"],
+      ["Rapport", "6/10"],
+      ["Control", "7/10"],
+      ["Objection Handling", "6/10"],
+      ["Appointment Setting", "5/10"],
+      ["DISC Adaptation", "6/10"]
+    ];
 
-if(text.includes("saber score")){
-showReview();
-}
+    document.getElementById("scorecards").innerHTML = scorecards
+      .map(([k,v]) => `<div>${k}: <strong>${v}</strong></div>`)
+      .join("");
 
-if(text.includes("saber end")){
-endSession();
-}
+    document.getElementById("blindReveal").innerHTML = `
+      Lead Type: <strong>${currentScenario.leadType}</strong><br>
+      DISC: <strong>${currentScenario.disc}</strong><br>
+      Frustration: <strong>${currentScenario.frustration}</strong><br>
+      Motivation: <strong>${currentScenario.motivation}</strong><br>
+      Mood: <strong>${currentScenario.mood}</strong>
+    `;
 
-respondAI(text);
+    document.getElementById("stateChanges").innerHTML = `
+      Trust: <strong>${currentScenario.trustStart} → ${currentScenario.trustEnd}</strong><br>
+      Defensiveness: <strong>${currentScenario.defensiveStart} → ${currentScenario.defensiveEnd}</strong><br>
+      Openness: <strong>${currentScenario.opennessStart} → ${currentScenario.opennessEnd}</strong>
+    `;
+  }
 
-}
+  function startVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-function respondAI(text){
+    if (!SpeechRecognition) {
+      addLine("coach", "Speech recognition is not supported in this browser.");
+      return;
+    }
 
-const responses = [
-"Yes we've been thinking about selling",
-"We already tried that before",
-"I'm not sure we want another agent",
-"What makes you different",
-"We may just wait"
-];
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
 
-const reply = responses[Math.floor(Math.random()*responses.length)];
+    recognition.onresult = function(event) {
+      const spokenText = event.results[event.results.length - 1][0].transcript.trim();
+      addLine("user", spokenText);
+      handleVoiceInput(spokenText);
+    };
 
-setTimeout(()=>{
-addLine("ai", reply);
-speak(reply);
-},1000);
+    recognition.onerror = function(event) {
+      console.error(event);
+      addLine("coach", `Speech recognition error: ${event.error}`);
+    };
 
-}
+    recognition.onend = function() {
+      if (statusText.textContent === "Live") {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
 
-function speak(text){
+    recognition.start();
+  }
 
-const speech = new SpeechSynthesisUtterance(text);
+  function stopVoiceRecognition() {
+    if (recognition) {
+      try {
+        recognition.onend = null;
+        recognition.stop();
+      } catch (e) {
+        console.error(e);
+      }
+      recognition = null;
+    }
+  }
 
-speech.lang = "en-US";
+  function handleVoiceInput(text) {
+    const lower = text.toLowerCase();
 
-window.speechSynthesis.speak(speech);
+    if (lower.includes("saber pause")) {
+      addLine("coach", "Paused.");
+      speak("Paused.");
+      return;
+    }
 
-}
+    if (lower.includes("saber coach")) {
+      addLine("coach", "Coach: slow down, ask a cleaner diagnostic question, and avoid pitching too early.");
+      speak("Slow down, ask a cleaner diagnostic question, and avoid pitching too early.");
+      return;
+    }
 
-document.getElementById("startBtn").addEventListener("click",()=>{
+    if (lower.includes("saber resume")) {
+      addLine("coach", "Resuming.");
+      speak("Resuming.");
+      return;
+    }
 
-startSession();
+    if (lower.includes("saber score")) {
+      addLine("coach", "Showing review.");
+      showReview();
+      return;
+    }
 
-startVoice();
+    if (lower.includes("saber end")) {
+      addLine("coach", "Ending call.");
+      speak("Ending call.");
+      endSession();
+      return;
+    }
 
-});
+    respondAI(text);
+  }
 
+  function respondAI(userText) {
+    const leadType = document.getElementById("leadType").value;
+
+    const responsePools = {
+      "Expired": [
+        "We already had it listed. It didn't sell.",
+        "We're probably just going to wait for now.",
+        "What would you do differently?",
+        "We may relist, but not right away."
+      ],
+      "FSBO": [
+        "We're trying to sell it ourselves first.",
+        "I don't really want to pay a commission.",
+        "We've had some interest already.",
+        "What exactly are you offering?"
+      ],
+      "Cancelled": [
+        "We pulled it off the market.",
+        "The whole process got frustrating.",
+        "We're taking a break right now.",
+        "We're not sure we want to do that again."
+      ],
+      "Divorce": [
+        "We're still figuring things out.",
+        "Nothing has been fully decided yet.",
+        "There are a lot of moving pieces right now.",
+        "We're trying to understand our options."
+      ],
+      "Landlord": [
+        "It's cash flowing, so I'm not in a rush.",
+        "I've thought about selling, but I don't want the taxes.",
+        "The property has been fine overall.",
+        "What are you actually seeing?"
+      ],
+      "Absentee Owner": [
+        "I've owned it a long time.",
+        "We're just renting it for now.",
+        "I'm not local, so I don't deal with it much.",
+        "I might consider selling at some point."
+      ],
+      "Probate": [
+        "We're still figuring out what to do with the property.",
+        "There are family members involved.",
+        "We're not ready to make a decision yet.",
+        "The house probably needs some work."
+      ],
+      "COI": [
+        "Things have been good. What's new with you?",
+        "No big plans right now.",
+        "We've just been busy lately.",
+        "Nothing immediate, but you never know."
+      ]
+    };
+
+    const pool = responsePools[leadType] || ["Hello?"];
+    const reply = randomItem(pool);
+
+    setTimeout(() => {
+      addLine("ai", reply);
+      speak(reply);
+    }, 900);
+  }
+
+  function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    window.speechSynthesis.speak(utterance);
+  }
+
+  document.getElementById("startBtn").addEventListener("click", startSession);
+  document.getElementById("endBtn").addEventListener("click", endSession);
+
+  document.getElementById("pauseBtn").addEventListener("click", () => handleVoiceInput("saber pause"));
+  document.getElementById("coachBtn").addEventListener("click", () => handleVoiceInput("saber coach"));
+  document.getElementById("resumeBtn").addEventListener("click", () => handleVoiceInput("saber resume"));
+  document.getElementById("scoreBtn").addEventListener("click", () => handleVoiceInput("saber score"));
+
+  document.getElementById("replayBtn").addEventListener("click", () => {
+    addLine("system", "Replaying same seller.");
+    reviewSection.classList.remove("show");
+    setStatus("idle");
+  });
+
+  document.getElementById("newBtn").addEventListener("click", () => {
+    addLine("system", "Generating new random seller.");
+    reviewSection.classList.remove("show");
+    buildLocalScenario();
+    setStatus("idle");
+  });
 </script>
 </body>
 </html>
