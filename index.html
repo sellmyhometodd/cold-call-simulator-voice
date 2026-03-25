@@ -76,9 +76,7 @@
       font: inherit;
     }
 
-    button {
-      cursor: pointer;
-    }
+    button { cursor: pointer; }
 
     button:disabled {
       opacity: .6;
@@ -484,23 +482,21 @@
           body: JSON.stringify(payload)
         });
 
-const sessionData = await sessionResp.json();
+        const sessionData = await sessionResp.json();
+        console.log("Session data from backend:", sessionData);
+        addLine("system", "Session response received from backend.");
 
-console.log("Session data from backend:", sessionData);
-addLine("system", "Session response received from backend.");
+        if (!sessionResp.ok) {
+          console.error(sessionData);
+          throw new Error("Failed to create realtime session: " + JSON.stringify(sessionData));
+        }
 
-if (!sessionResp.ok) {
-  console.error(sessionData);
-  throw new Error("Failed to create realtime session: " + JSON.stringify(sessionData));
-}
+        const ephemeralKey = sessionData.value || null;
 
-const ephemeralKey = sessionData.value || null;
-        
-if (!ephemeralKey) {
-  console.error(sessionData);
-  throw new Error("No client secret returned from backend: " + JSON.stringify(sessionData));
-}
-      
+        if (!ephemeralKey) {
+          console.error(sessionData);
+          throw new Error("No client secret returned from backend: " + JSON.stringify(sessionData));
+        }
 
         pc = new RTCPeerConnection();
 
@@ -550,16 +546,14 @@ if (!ephemeralKey) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-        const model = "gpt-4o-realtime-preview";
-        
-    const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
-  method: "POST",
-  body: offer.sdp,
-  headers: {
-    Authorization: "Bearer " + ephemeralKey,
-    "Content-Type": "application/sdp"
-  }
-});
+        const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: "Bearer " + ephemeralKey,
+            "Content-Type": "application/sdp"
+          }
+        });
 
         if (!sdpResp.ok) {
           const text = await sdpResp.text();
