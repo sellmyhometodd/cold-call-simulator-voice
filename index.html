@@ -89,6 +89,12 @@
       gap: 10px;
     }
 
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
     .btn-primary {
       background: linear-gradient(180deg, #ef8448, var(--accent));
       border: none;
@@ -198,7 +204,7 @@
     }
 
     @media (max-width: 700px) {
-      .grid, .controls, .review-grid {
+      .grid, .grid-3, .controls, .review-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -264,6 +270,20 @@
             <option>Manual</option>
           </select>
         </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="objectiveType">Call Objective</label>
+        <select id="objectiveType">
+          <option selected>First Contact</option>
+          <option>Build Rapport</option>
+          <option>Uncover Motivation</option>
+          <option>Handle Objection</option>
+          <option>Re-Engage</option>
+          <option>Set Appointment</option>
+          <option>Confirm Appointment</option>
+          <option>Nurture Follow-Up</option>
+        </select>
       </div>
 
       <div style="margin-top:10px;">
@@ -370,8 +390,11 @@
 
     function buildLocalScenario() {
       const leadType = document.getElementById("leadType").value;
+      const objective = document.getElementById("objectiveType").value;
+
       currentScenario = {
         leadType: leadType,
+        objective: objective,
         disc: randomItem(["D", "I", "S", "C"]),
         frustration: randomItem(["Low", "Medium", "High"]),
         motivation: randomItem(["Low", "Medium", "High"]),
@@ -394,9 +417,10 @@
         ["Opening", "7/10"],
         ["Rapport", "6/10"],
         ["Control", "7/10"],
+        ["Question Quality", "7/10"],
         ["Objection Handling", "6/10"],
-        ["Appointment Setting", "5/10"],
-        ["DISC Adaptation", "6/10"]
+        ["Objective Execution", "6/10"],
+        ["Appointment Positioning", "5/10"]
       ];
 
       document.getElementById("scorecards").innerHTML = scorecards
@@ -407,6 +431,7 @@
 
       document.getElementById("blindReveal").innerHTML =
         "Lead Type: <strong>" + currentScenario.leadType + "</strong><br>" +
+        "Objective: <strong>" + currentScenario.objective + "</strong><br>" +
         "DISC: <strong>" + currentScenario.disc + "</strong><br>" +
         "Frustration: <strong>" + currentScenario.frustration + "</strong><br>" +
         "Motivation: <strong>" + currentScenario.motivation + "</strong><br>" +
@@ -464,6 +489,7 @@
         leadType: document.getElementById("leadType").value,
         difficulty: document.getElementById("difficulty").value,
         mode: document.getElementById("mode").value,
+        objective: document.getElementById("objectiveType").value,
         voice: document.getElementById("voiceType").value
       };
 
