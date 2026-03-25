@@ -1,273 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cold Call Simulator</title>
-  <style>
-    :root{
-      --bg:#0f1218;
-      --panel:#171b23;
-      --panel-2:#1d2330;
-      --line:#2a3140;
-      --text:#f5f7fb;
-      --muted:#a8b0bd;
-      --accent:#df6827;
-      --good:#44c27a;
-      --warn:#f0b04f;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:linear-gradient(180deg,#0d1015,#131925);
-      color:var(--text);
-      padding:12px;
-    }
-    .wrap{
-      max-width:760px;
-      margin:0 auto;
-      display:grid;
-      gap:12px;
-    }
-    .card{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-    }
-    h1,h2,h3,p{margin:0}
-    h1{font-size:24px;line-height:1.1}
-    .sub{margin-top:8px;color:var(--muted);font-size:14px;line-height:1.5}
-    label{
-      display:block;
-      margin:0 0 6px;
-      font-size:12px;
-      color:var(--muted);
-      font-weight:700;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-    select,button,textarea,input{
-      width:100%;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:var(--panel-2);
-      color:var(--text);
-      padding:12px 14px;
-      font:inherit;
-    }
-    textarea{min-height:84px;resize:vertical}
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-    .btn-primary{
-      background:linear-gradient(180deg,#ef8448,var(--accent));
-      border:none;
-      font-weight:700;
-    }
-    .btn-secondary{
-      background:#232938;
-      font-weight:700;
-    }
-    .btn-ghost{
-      background:transparent;
-      border:1px dashed var(--line);
-      color:var(--muted);
-      font-weight:700;
-    }
-    .status{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-size:13px;
-      color:var(--muted);
-      font-weight:700;
-    }
-    .dot{
-      width:9px;
-      height:9px;
-      border-radius:999px;
-      background:var(--warn);
-    }
-    .dot.live{background:var(--good)}
-    .transcript{
-      height:320px;
-      overflow:auto;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#10141c;
-      padding:12px;
-    }
-    .line{
-      margin-bottom:10px;
-      line-height:1.5;
-      white-space:pre-wrap;
-      font-size:14px;
-    }
-    .user{color:#ffd9c7}
-    .ai{color:#dbe2ef}
-    .coach{color:#8fe0b2}
-    .system{color:var(--muted)}
-    .controls{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-    .review{
-      display:none;
-      gap:10px;
-    }
-    .review.show{display:grid}
-    .review-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-    .mini{
-      background:#10141c;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:12px;
-    }
-    .mini h3{
-      font-size:13px;
-      margin-bottom:8px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-    .score-list{
-      display:grid;
-      gap:8px;
-    }
-    .small{font-size:12px;color:var(--muted);line-height:1.5}
-    @media (max-width:700px){
-      .grid,.controls,.review-grid{grid-template-columns:1fr}
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <section class="card">
-      <h1>Cold Call Simulator</h1>
-      <p class="sub">Voice-first mobile simulator. Use the wake word <strong>Saber</strong> for controls. This version sets up the UI and connects to your Railway backend.</p>
-    </section>
-
-    <section class="card">
-      <div class="grid">
-        <div>
-          <label for="leadType">Lead Type</label>
-          <select id="leadType">
-            <option>Expired</option>
-            <option>FSBO</option>
-            <option>Cancelled</option>
-            <option>Divorce</option>
-            <option>Landlord</option>
-            <option>Absentee Owner</option>
-            <option>Probate</option>
-            <option>COI</option>
-          </select>
-        </div>
-        <div>
-          <label for="difficulty">Difficulty</label>
-          <select id="difficulty">
-            <option>Easy</option>
-            <option selected>Medium</option>
-            <option>Hard</option>
-            <option>Expert</option>
-          </select>
-        </div>
-      </div>
-<div>
-  <label for="voiceType">Voice</label>
-  <select id="voiceType">
-    <option value="cedar" selected>Cedar</option>
-    <option value="marin">Marin</option>
-    <option value="ash">Ash</option>
-    <option value="coral">Coral</option>
-    <option value="alloy">Alloy</option>
-    <option value="echo">Echo</option>
-    <option value="sage">Sage</option>
-    <option value="shimmer">Shimmer</option>
-    <option value="verse">Verse</option>
-    <option value="ballad">Ballad</option>
-  </select>
-</div>
-      <div style="margin-top:10px">
-        <label for="mode">Mode</label>
-        <select id="mode">
-          <option selected>Random Seller</option>
-          <option>Manual</option>
-        </select>
-      </div>
-
-      <div style="margin-top:10px">
-        <label for="backendUrl">Railway Backend URL</label>
-        <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
-      </div>
-
-      <div class="grid" style="margin-top:10px">
-        <button id="startBtn" class="btn-primary">Start Voice Session</button>
-        <button id="endBtn" class="btn-secondary">End Session</button>
-      </div>
-
-      <div style="margin-top:10px" class="small">
-        Voice commands: <strong>Saber pause</strong>, <strong>Saber coach</strong>, <strong>Saber resume</strong>, <strong>Saber score</strong>, <strong>Saber end</strong>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="status">
-        <span id="statusDot" class="dot"></span>
-        <span id="statusText">Idle</span>
-      </div>
-
-      <div id="transcript" class="transcript" style="margin-top:12px">
-        <div class="line system">Start a session, allow microphone access, and test the UI flow first.</div>
-      </div>
-
-      <div class="controls" style="margin-top:12px">
-        <button id="pauseBtn" class="btn-secondary">Saber Pause</button>
-        <button id="coachBtn" class="btn-secondary">Saber Coach</button>
-        <button id="resumeBtn" class="btn-secondary">Saber Resume</button>
-        <button id="scoreBtn" class="btn-secondary">Saber Score</button>
-      </div>
-    </section>
-
-    <section id="reviewSection" class="card review">
-      <div class="review-grid">
-        <div class="mini">
-          <h3>Scorecards</h3>
-          <div id="scorecards" class="score-list"></div>
-        </div>
-        <div class="mini">
-          <h3>Blind Reveal</h3>
-          <div id="blindReveal" class="small"></div>
-        </div>
-      </div>
-
-      <div class="review-grid">
-        <div class="mini">
-          <h3>State Changes</h3>
-          <div id="stateChanges" class="small"></div>
-        </div>
-        <div class="mini">
-          <h3>Replay</h3>
-          <div class="controls">
-            <button id="replayBtn" class="btn-secondary">Replay Same Seller</button>
-            <button id="newBtn" class="btn-secondary">New Random Seller</button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
 <script>
+  let pc = null;
+  let dc = null;
+  let audioEl = null;
+  let localStream = null;
   let currentScenario = null;
-  let recognition = null;
 
   const transcript = document.getElementById("transcript");
   const statusText = document.getElementById("statusText");
@@ -315,51 +51,6 @@
     };
   }
 
-  async function startSession() {
-    reviewSection.classList.remove("show");
-    buildLocalScenario();
-    setStatus("live");
-    addLine("system", "Requesting microphone and contacting backend...");
-
-    const backendUrl = document.getElementById("backendUrl").value.trim();
-    const payload = {
-      leadType: document.getElementById("leadType").value,
-      difficulty: document.getElementById("difficulty").value,
-      mode: document.getElementById("mode").value,
-      voice: document.getElementById("voiceType").value
-      };
-
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      const res = await fetch(`${backendUrl}/session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      console.log(data);
-
-      addLine("system", "Backend connected.");
-      addLine("ai", "Seller answers: Hello?");
-      speak("Hello?");
-      startVoiceRecognition();
-
-    } catch (err) {
-      console.error(err);
-      setStatus("failed");
-      addLine("coach", "Could not start session. Check mic permissions and backend URL.");
-    }
-  }
-
-  function endSession() {
-    setStatus("idle");
-    addLine("system", "Session ended.");
-    stopVoiceRecognition();
-    showReview();
-  }
-
   function showReview() {
     if (!currentScenario) return;
     reviewSection.classList.add("show");
@@ -374,7 +65,7 @@
     ];
 
     document.getElementById("scorecards").innerHTML = scorecards
-      .map(([k,v]) => `<div>${k}: <strong>${v}</strong></div>`)
+      .map(([k, v]) => `<div>${k}: <strong>${v}</strong></div>`)
       .join("");
 
     document.getElementById("blindReveal").innerHTML = `
@@ -392,167 +83,165 @@
     `;
   }
 
-  function startVoiceRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  async function startSession() {
+    reviewSection.classList.remove("show");
+    buildLocalScenario();
+    setStatus("live");
+    addLine("system", "Requesting microphone and creating realtime session...");
 
-    if (!SpeechRecognition) {
-      addLine("coach", "Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-
-    recognition.onresult = function(event) {
-      const spokenText = event.results[event.results.length - 1][0].transcript.trim();
-      addLine("user", spokenText);
-      handleVoiceInput(spokenText);
+    const backendUrl = document.getElementById("backendUrl").value.trim();
+    const payload = {
+      leadType: document.getElementById("leadType").value,
+      difficulty: document.getElementById("difficulty").value,
+      mode: document.getElementById("mode").value,
+      voice: "cedar"
     };
 
-    recognition.onerror = function(event) {
-      console.error(event);
-      addLine("coach", `Speech recognition error: ${event.error}`);
-    };
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    recognition.onend = function() {
-      if (statusText.textContent === "Live") {
+      const sessionResp = await fetch(`${backendUrl}/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const sessionData = await sessionResp.json();
+      if (!sessionResp.ok) {
+        console.error(sessionData);
+        throw new Error("Failed to create realtime session.");
+      }
+
+      const ephemeralKey = sessionData.client_secret?.value;
+      if (!ephemeralKey) {
+        console.error(sessionData);
+        throw new Error("No client secret returned.");
+      }
+
+      pc = new RTCPeerConnection();
+
+      audioEl = document.createElement("audio");
+      audioEl.autoplay = true;
+      pc.ontrack = (e) => {
+        audioEl.srcObject = e.streams[0];
+      };
+
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+
+      dc = pc.createDataChannel("oai-events");
+
+      dc.onopen = () => {
+        addLine("system", "Realtime voice connected.");
+      };
+
+      dc.onmessage = (event) => {
         try {
-          recognition.start();
-        } catch (e) {
-          console.error(e);
+          const msg = JSON.parse(event.data);
+
+          if (msg.type === "response.audio_transcript.done" && msg.transcript) {
+            addLine("ai", msg.transcript);
+          }
+
+          if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+            addLine("user", msg.transcript);
+
+            const lower = msg.transcript.toLowerCase();
+            if (lower.includes("saber score") || lower.includes("saber end")) {
+              showReview();
+            }
+          }
+
+          if (msg.type === "error") {
+            addLine("coach", `Error: ${JSON.stringify(msg.error)}`);
+          }
+        } catch (err) {
+          console.error(err);
         }
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const model = "gpt-4o-realtime-preview";
+      const sdpResp = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp"
+        }
+      });
+
+      const answerSdp = await sdpResp.text();
+      await pc.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp
+      });
+
+      addLine("system", "Seller should respond first.");
+    } catch (err) {
+      console.error(err);
+      setStatus("failed");
+      addLine("coach", err.message || "Could not start realtime session.");
+    }
+  }
+
+  async function endSession() {
+    try {
+      if (dc) {
+        dc.close();
+        dc = null;
       }
-    };
-
-    recognition.start();
-  }
-
-  function stopVoiceRecognition() {
-    if (recognition) {
-      try {
-        recognition.onend = null;
-        recognition.stop();
-      } catch (e) {
-        console.error(e);
+      if (pc) {
+        pc.close();
+        pc = null;
       }
-      recognition = null;
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+    } catch (err) {
+      console.error(err);
     }
+
+    setStatus("idle");
+    addLine("system", "Session ended.");
+    showReview();
   }
 
-  function handleVoiceInput(text) {
-    const lower = text.toLowerCase();
-
-    if (lower.includes("saber pause")) {
-      addLine("coach", "Paused.");
-      speak("Paused.");
+  function sendCommand(text) {
+    if (!dc || dc.readyState !== "open") {
+      addLine("coach", "No live realtime channel.");
       return;
     }
 
-    if (lower.includes("saber coach")) {
-      addLine("coach", "Coach: slow down, ask a cleaner diagnostic question, and avoid pitching too early.");
-      speak("Slow down, ask a cleaner diagnostic question, and avoid pitching too early.");
-      return;
-    }
+    dc.send(JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          { type: "input_text", text }
+        ]
+      }
+    }));
 
-    if (lower.includes("saber resume")) {
-      addLine("coach", "Resuming.");
-      speak("Resuming.");
-      return;
-    }
+    dc.send(JSON.stringify({
+      type: "response.create"
+    }));
 
-    if (lower.includes("saber score")) {
-      addLine("coach", "Showing review.");
-      showReview();
-      return;
-    }
-
-    if (lower.includes("saber end")) {
-      addLine("coach", "Ending call.");
-      speak("Ending call.");
-      endSession();
-      return;
-    }
-
-    respondAI(text);
-  }
-
-  function respondAI(userText) {
-    const leadType = document.getElementById("leadType").value;
-
-    const responsePools = {
-      "Expired": [
-        "We already had it listed. It didn't sell.",
-        "We're probably just going to wait for now.",
-        "What would you do differently?",
-        "We may relist, but not right away."
-      ],
-      "FSBO": [
-        "We're trying to sell it ourselves first.",
-        "I don't really want to pay a commission.",
-        "We've had some interest already.",
-        "What exactly are you offering?"
-      ],
-      "Cancelled": [
-        "We pulled it off the market.",
-        "The whole process got frustrating.",
-        "We're taking a break right now.",
-        "We're not sure we want to do that again."
-      ],
-      "Divorce": [
-        "We're still figuring things out.",
-        "Nothing has been fully decided yet.",
-        "There are a lot of moving pieces right now.",
-        "We're trying to understand our options."
-      ],
-      "Landlord": [
-        "It's cash flowing, so I'm not in a rush.",
-        "I've thought about selling, but I don't want the taxes.",
-        "The property has been fine overall.",
-        "What are you actually seeing?"
-      ],
-      "Absentee Owner": [
-        "I've owned it a long time.",
-        "We're just renting it for now.",
-        "I'm not local, so I don't deal with it much.",
-        "I might consider selling at some point."
-      ],
-      "Probate": [
-        "We're still figuring out what to do with the property.",
-        "There are family members involved.",
-        "We're not ready to make a decision yet.",
-        "The house probably needs some work."
-      ],
-      "COI": [
-        "Things have been good. What's new with you?",
-        "No big plans right now.",
-        "We've just been busy lately.",
-        "Nothing immediate, but you never know."
-      ]
-    };
-
-    const pool = responsePools[leadType] || ["Hello?"];
-    const reply = randomItem(pool);
-
-    setTimeout(() => {
-      addLine("ai", reply);
-      speak(reply);
-    }, 900);
-  }
-
-  function speak(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    window.speechSynthesis.speak(utterance);
+    addLine("user", `[command] ${text}`);
   }
 
   document.getElementById("startBtn").addEventListener("click", startSession);
   document.getElementById("endBtn").addEventListener("click", endSession);
 
-  document.getElementById("pauseBtn").addEventListener("click", () => handleVoiceInput("saber pause"));
-  document.getElementById("coachBtn").addEventListener("click", () => handleVoiceInput("saber coach"));
-  document.getElementById("resumeBtn").addEventListener("click", () => handleVoiceInput("saber resume"));
-  document.getElementById("scoreBtn").addEventListener("click", () => handleVoiceInput("saber score"));
+  document.getElementById("pauseBtn").addEventListener("click", () => sendCommand("Saber pause"));
+  document.getElementById("coachBtn").addEventListener("click", () => sendCommand("Saber coach"));
+  document.getElementById("resumeBtn").addEventListener("click", () => sendCommand("Saber resume"));
+  document.getElementById("scoreBtn").addEventListener("click", () => sendCommand("Saber score"));
 
   document.getElementById("replayBtn").addEventListener("click", () => {
     addLine("system", "Replaying same seller.");
@@ -567,5 +256,3 @@
     setStatus("idle");
   });
 </script>
-</body>
-</html>
