@@ -1,258 +1,671 @@
-<script>
-  let pc = null;
-  let dc = null;
-  let audioEl = null;
-  let localStream = null;
-  let currentScenario = null;
-
-  const transcript = document.getElementById("transcript");
-  const statusText = document.getElementById("statusText");
-  const statusDot = document.getElementById("statusDot");
-  const reviewSection = document.getElementById("reviewSection");
-
-  function setStatus(mode) {
-    statusDot.className = "dot";
-    if (mode === "live") {
-      statusDot.classList.add("live");
-      statusText.textContent = "Live";
-    } else if (mode === "failed") {
-      statusText.textContent = "Failed";
-    } else {
-      statusText.textContent = "Idle";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cold Call Simulator</title>
+  <style>
+    :root {
+      --bg: #0f1218;
+      --panel: #171b23;
+      --panel-2: #1d2330;
+      --line: #2a3140;
+      --text: #f5f7fb;
+      --muted: #a8b0bd;
+      --accent: #df6827;
+      --good: #44c27a;
+      --warn: #f0b04f;
+      --bad: #e26464;
     }
-  }
 
-  function addLine(type, text) {
-    const div = document.createElement("div");
-    div.className = `line ${type}`;
-    div.textContent = text;
-    transcript.appendChild(div);
-    transcript.scrollTop = transcript.scrollHeight;
-  }
+    * {
+      box-sizing: border-box;
+    }
 
-  function randomItem(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0d1015, #131925);
+      color: var(--text);
+      padding: 12px;
+    }
 
-  function buildLocalScenario() {
-    const leadType = document.getElementById("leadType").value;
-    currentScenario = {
-      leadType,
-      disc: randomItem(["D","I","S","C"]),
-      frustration: randomItem(["Low","Medium","High"]),
-      motivation: randomItem(["Low","Medium","High"]),
-      mood: randomItem(["Calm","Skeptical","Defensive","Frustrated"]),
-      trustStart: 3,
-      trustEnd: 6,
-      defensiveStart: 7,
-      defensiveEnd: 5,
-      opennessStart: 2,
-      opennessEnd: 5
-    };
-  }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
 
-  function showReview() {
-    if (!currentScenario) return;
-    reviewSection.classList.add("show");
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
 
-    const scorecards = [
-      ["Opening", "7/10"],
-      ["Rapport", "6/10"],
-      ["Control", "7/10"],
-      ["Objection Handling", "6/10"],
-      ["Appointment Setting", "5/10"],
-      ["DISC Adaptation", "6/10"]
-    ];
+    h1, h2, h3, p {
+      margin: 0;
+    }
 
-    document.getElementById("scorecards").innerHTML = scorecards
-      .map(([k, v]) => `<div>${k}: <strong>${v}</strong></div>`)
-      .join("");
+    h1 {
+      font-size: 24px;
+      line-height: 1.1;
+    }
 
-    document.getElementById("blindReveal").innerHTML = `
-      Lead Type: <strong>${currentScenario.leadType}</strong><br>
-      DISC: <strong>${currentScenario.disc}</strong><br>
-      Frustration: <strong>${currentScenario.frustration}</strong><br>
-      Motivation: <strong>${currentScenario.motivation}</strong><br>
-      Mood: <strong>${currentScenario.mood}</strong>
-    `;
+    .sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
 
-    document.getElementById("stateChanges").innerHTML = `
-      Trust: <strong>${currentScenario.trustStart} → ${currentScenario.trustEnd}</strong><br>
-      Defensiveness: <strong>${currentScenario.defensiveStart} → ${currentScenario.defensiveEnd}</strong><br>
-      Openness: <strong>${currentScenario.opennessStart} → ${currentScenario.opennessEnd}</strong>
-    `;
-  }
+    label {
+      display: block;
+      margin: 0 0 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
 
-  async function startSession() {
-    reviewSection.classList.remove("show");
-    buildLocalScenario();
-    setStatus("live");
-    addLine("system", "Requesting microphone and creating realtime session...");
+    select,
+    button,
+    input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 12px 14px;
+      font: inherit;
+    }
 
-    const backendUrl = document.getElementById("backendUrl").value.trim();
-    const payload = {
-      leadType: document.getElementById("leadType").value,
-      difficulty: document.getElementById("difficulty").value,
-      mode: document.getElementById("mode").value,
-      voice: "cedar"
-    };
+    button {
+      cursor: pointer;
+    }
 
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
-      const sessionResp = await fetch(`${backendUrl}/session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-      const sessionData = await sessionResp.json();
-      if (!sessionResp.ok) {
-        console.error(sessionData);
-        throw new Error("Failed to create realtime session.");
+    .btn-primary {
+      background: linear-gradient(180deg, #ef8448, var(--accent));
+      border: none;
+      font-weight: 700;
+    }
+
+    .btn-secondary {
+      background: #232938;
+      font-weight: 700;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--warn);
+    }
+
+    .dot.live {
+      background: var(--good);
+    }
+
+    .dot.failed {
+      background: var(--bad);
+    }
+
+    .transcript {
+      height: 340px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #10141c;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .line {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    .user {
+      color: #ffd9c7;
+    }
+
+    .ai {
+      color: #dbe2ef;
+    }
+
+    .coach {
+      color: #8fe0b2;
+    }
+
+    .system {
+      color: var(--muted);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .review {
+      display: none;
+      gap: 10px;
+    }
+
+    .review.show {
+      display: grid;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini {
+      background: #10141c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .mini h3 {
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .score-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hidden-audio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      .grid,
+      .controls,
+      .review-grid {
+        grid-template-columns: 1fr;
       }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <h1>Cold Call Simulator</h1>
+      <p class="sub">
+        Full Realtime voice version. Use the wake word <strong>Saber</strong> for commands.
+        This version removes browser speech recognition, browser text-to-speech, and canned local responses.
+      </p>
+    </section>
 
-      const ephemeralKey = sessionData.client_secret?.value;
-      if (!ephemeralKey) {
-        console.error(sessionData);
-        throw new Error("No client secret returned.");
+    <section class="card">
+      <div class="grid">
+        <div>
+          <label for="leadType">Lead Type</label>
+          <select id="leadType">
+            <option>Expired</option>
+            <option>FSBO</option>
+            <option>Cancelled</option>
+            <option>Divorce</option>
+            <option>Landlord</option>
+            <option>Absentee Owner</option>
+            <option>Probate</option>
+            <option>COI</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option>Easy</option>
+            <option selected>Medium</option>
+            <option>Hard</option>
+            <option>Expert</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px;" class="grid">
+        <div>
+          <label for="voiceType">Voice</label>
+          <select id="voiceType">
+            <option value="cedar" selected>Cedar</option>
+            <option value="marin">Marin</option>
+            <option value="ash">Ash</option>
+            <option value="coral">Coral</option>
+            <option value="alloy">Alloy</option>
+            <option value="echo">Echo</option>
+            <option value="sage">Sage</option>
+            <option value="shimmer">Shimmer</option>
+            <option value="verse">Verse</option>
+            <option value="ballad">Ballad</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option selected>Random Seller</option>
+            <option>Manual</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <label for="backendUrl">Railway Backend URL</label>
+        <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
+      </div>
+
+      <div class="grid" style="margin-top: 12px;">
+        <button id="startBtn" class="btn-primary">Start Voice Session</button>
+        <button id="endBtn" class="btn-secondary">End Session</button>
+      </div>
+
+      <div style="margin-top: 10px;" class="small">
+        Commands: <strong>Saber pause</strong>, <strong>Saber coach</strong>,
+        <strong>Saber resume</strong>, <strong>Saber score</strong>, <strong>Saber end</strong>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="status">
+        <span id="statusDot" class="dot"></span>
+        <span id="statusText">Idle</span>
+      </div>
+
+      <div id="transcript" class="transcript">
+        <div class="line system">Press Start Voice Session and allow microphone access.</div>
+      </div>
+
+      <div class="controls">
+        <button id="pauseBtn" class="btn-secondary">Saber Pause</button>
+        <button id="coachBtn" class="btn-secondary">Saber Coach</button>
+        <button id="resumeBtn" class="btn-secondary">Saber Resume</button>
+        <button id="scoreBtn" class="btn-secondary">Saber Score</button>
+      </div>
+    </section>
+
+    <section id="reviewSection" class="card review">
+      <div class="review-grid">
+        <div class="mini">
+          <h3>Scorecards</h3>
+          <div id="scorecards" class="score-list"></div>
+        </div>
+        <div class="mini">
+          <h3>Blind Reveal</h3>
+          <div id="blindReveal" class="small"></div>
+        </div>
+      </div>
+
+      <div class="review-grid">
+        <div class="mini">
+          <h3>State Changes</h3>
+          <div id="stateChanges" class="small"></div>
+        </div>
+        <div class="mini">
+          <h3>Replay</h3>
+          <div class="controls" style="margin-top: 0;">
+            <button id="replayBtn" class="btn-secondary">Replay Same Seller</button>
+            <button id="newBtn" class="btn-secondary">New Random Seller</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <audio id="remoteAudio" class="hidden-audio" autoplay playsinline></audio>
+
+  <script>
+    let pc = null;
+    let dc = null;
+    let localStream = null;
+    let currentScenario = null;
+    let sessionLive = false;
+
+    const transcript = document.getElementById("transcript");
+    const statusText = document.getElementById("statusText");
+    const statusDot = document.getElementById("statusDot");
+    const reviewSection = document.getElementById("reviewSection");
+    const remoteAudio = document.getElementById("remoteAudio");
+
+    function setStatus(mode) {
+      statusDot.className = "dot";
+      if (mode === "live") {
+        statusDot.classList.add("live");
+        statusText.textContent = "Live";
+      } else if (mode === "failed") {
+        statusDot.classList.add("failed");
+        statusText.textContent = "Failed";
+      } else {
+        statusText.textContent = "Idle";
       }
+    }
 
-      pc = new RTCPeerConnection();
+    function addLine(type, text) {
+      const div = document.createElement("div");
+      div.className = `line ${type}`;
+      div.textContent = text;
+      transcript.appendChild(div);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
 
-      audioEl = document.createElement("audio");
-      audioEl.autoplay = true;
-      pc.ontrack = (e) => {
-        audioEl.srcObject = e.streams[0];
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function buildLocalScenario() {
+      const leadType = document.getElementById("leadType").value;
+      currentScenario = {
+        leadType,
+        disc: randomItem(["D", "I", "S", "C"]),
+        frustration: randomItem(["Low", "Medium", "High"]),
+        motivation: randomItem(["Low", "Medium", "High"]),
+        mood: randomItem(["Calm", "Skeptical", "Defensive", "Frustrated"]),
+        trustStart: 3,
+        trustEnd: 6,
+        defensiveStart: 7,
+        defensiveEnd: 5,
+        opennessStart: 2,
+        opennessEnd: 5
+      };
+    }
+
+    function showReview() {
+      if (!currentScenario) return;
+
+      reviewSection.classList.add("show");
+
+      const scorecards = [
+        ["Opening", "7/10"],
+        ["Rapport", "6/10"],
+        ["Control", "7/10"],
+        ["Objection Handling", "6/10"],
+        ["Appointment Setting", "5/10"],
+        ["DISC Adaptation", "6/10"]
+      ];
+
+      document.getElementById("scorecards").innerHTML = scorecards
+        .map(([k, v]) => `<div>${k}: <strong>${v}</strong></div>`)
+        .join("");
+
+      document.getElementById("blindReveal").innerHTML = `
+        Lead Type: <strong>${currentScenario.leadType}</strong><br>
+        DISC: <strong>${currentScenario.disc}</strong><br>
+        Frustration: <strong>${currentScenario.frustration}</strong><br>
+        Motivation: <strong>${currentScenario.motivation}</strong><br>
+        Mood: <strong>${currentScenario.mood}</strong>
+      `;
+
+      document.getElementById("stateChanges").innerHTML = `
+        Trust: <strong>${currentScenario.trustStart} → ${currentScenario.trustEnd}</strong><br>
+        Defensiveness: <strong>${currentScenario.defensiveStart} → ${currentScenario.defensiveEnd}</strong><br>
+        Openness: <strong>${currentScenario.opennessStart} → ${currentScenario.opennessEnd}</strong>
+      `;
+    }
+
+    function setButtonsDisabled(disabled) {
+      document.getElementById("startBtn").disabled = disabled;
+      document.getElementById("pauseBtn").disabled = !disabled;
+      document.getElementById("coachBtn").disabled = !disabled;
+      document.getElementById("resumeBtn").disabled = !disabled;
+      document.getElementById("scoreBtn").disabled = !disabled;
+    }
+
+    async function startSession() {
+      if (sessionLive) return;
+
+      reviewSection.classList.remove("show");
+      buildLocalScenario();
+      setStatus("live");
+      setButtonsDisabled(true);
+      addLine("system", "Requesting microphone and creating realtime session...");
+
+      const backendUrl = document.getElementById("backendUrl").value.trim();
+      const payload = {
+        leadType: document.getElementById("leadType").value,
+        difficulty: document.getElementById("difficulty").value,
+        mode: document.getElementById("mode").value,
+        voice: document.getElementById("voiceType").value
       };
 
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
-      });
-
-      dc = pc.createDataChannel("oai-events");
-
-      dc.onopen = () => {
-        addLine("system", "Realtime voice connected.");
-      };
-
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-
-          if (msg.type === "response.audio_transcript.done" && msg.transcript) {
-            addLine("ai", msg.transcript);
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
           }
+        });
 
-          if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
-            addLine("user", msg.transcript);
+        const sessionResp = await fetch(`${backendUrl}/session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-            const lower = msg.transcript.toLowerCase();
-            if (lower.includes("saber score") || lower.includes("saber end")) {
-              showReview();
+        const sessionData = await sessionResp.json();
+
+        if (!sessionResp.ok) {
+          console.error(sessionData);
+          throw new Error(`Failed to create realtime session: ${JSON.stringify(sessionData)}`);
+        }
+
+        const ephemeralKey = sessionData.client_secret?.value;
+        if (!ephemeralKey) {
+          console.error(sessionData);
+          throw new Error("No client secret returned from backend.");
+        }
+
+        pc = new RTCPeerConnection();
+
+        pc.ontrack = (event) => {
+          remoteAudio.srcObject = event.streams[0];
+          remoteAudio.play().catch((err) => {
+            console.error("Remote audio play failed:", err);
+            addLine("coach", "Audio playback was blocked by the browser.");
+          });
+        };
+
+        localStream.getTracks().forEach((track) => {
+          pc.addTrack(track, localStream);
+        });
+
+        dc = pc.createDataChannel("oai-events");
+
+        dc.onopen = () => {
+          addLine("system", "Realtime voice connected.");
+        };
+
+        dc.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === "response.audio_transcript.done" && msg.transcript) {
+              addLine("ai", msg.transcript);
             }
+
+            if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+              addLine("user", msg.transcript);
+
+              const lower = msg.transcript.toLowerCase();
+              if (lower.includes("saber score")) {
+                showReview();
+              }
+
+              if (lower.includes("saber end")) {
+                showReview();
+              }
+            }
+
+            if (msg.type === "error") {
+              addLine("coach", `Realtime error: ${JSON.stringify(msg.error)}`);
+            }
+          } catch (err) {
+            console.error("Data channel parse error:", err);
           }
+        };
 
-          if (msg.type === "error") {
-            addLine("coach", `Error: ${JSON.stringify(msg.error)}`);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const model = "gpt-4o-realtime-preview";
+        const sdpResp = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            "Content-Type": "application/sdp"
           }
-        } catch (err) {
-          console.error(err);
+        });
+
+        if (!sdpResp.ok) {
+          const text = await sdpResp.text();
+          throw new Error(`Realtime SDP handshake failed: ${text}`);
         }
-      };
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
+        const answerSdp = await sdpResp.text();
 
-      const model = "gpt-4o-realtime-preview";
-      const sdpResp = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp"
+        await pc.setRemoteDescription({
+          type: "answer",
+          sdp: answerSdp
+        });
+
+        sessionLive = true;
+        addLine("system", "Live session started. The seller should answer first.");
+      } catch (err) {
+        console.error(err);
+        setStatus("failed");
+        setButtonsDisabled(false);
+        addLine("coach", err.message || "Could not start realtime session.");
+        await cleanupConnection();
+      }
+    }
+
+    async function cleanupConnection() {
+      try {
+        if (dc) {
+          dc.close();
+          dc = null;
         }
-      });
 
-      const answerSdp = await sdpResp.text();
-      await pc.setRemoteDescription({
-        type: "answer",
-        sdp: answerSdp
-      });
+        if (pc) {
+          pc.close();
+          pc = null;
+        }
 
-      addLine("system", "Seller should respond first.");
-    } catch (err) {
-      console.error(err);
-      setStatus("failed");
-      addLine("coach", err.message || "Could not start realtime session.");
-    }
-  }
+        if (localStream) {
+          localStream.getTracks().forEach((track) => track.stop());
+          localStream = null;
+        }
 
-  async function endSession() {
-    try {
-      if (dc) {
-        dc.close();
-        dc = null;
+        remoteAudio.pause();
+        remoteAudio.srcObject = null;
+      } catch (err) {
+        console.error("Cleanup error:", err);
       }
-      if (pc) {
-        pc.close();
-        pc = null;
-      }
-      if (localStream) {
-        localStream.getTracks().forEach(t => t.stop());
-        localStream = null;
-      }
-    } catch (err) {
-      console.error(err);
+
+      sessionLive = false;
     }
 
-    setStatus("idle");
-    addLine("system", "Session ended.");
-    showReview();
-  }
-
-  function sendCommand(text) {
-    if (!dc || dc.readyState !== "open") {
-      addLine("coach", "No live realtime channel.");
-      return;
+    async function endSession() {
+      await cleanupConnection();
+      setStatus("idle");
+      setButtonsDisabled(false);
+      addLine("system", "Session ended.");
+      showReview();
     }
 
-    dc.send(JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          { type: "input_text", text }
-        ]
+    function sendCommand(text) {
+      if (!dc || dc.readyState !== "open") {
+        addLine("coach", "No live realtime channel.");
+        return;
       }
-    }));
 
-    dc.send(JSON.stringify({
-      type: "response.create"
-    }));
+      dc.send(JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text
+            }
+          ]
+        }
+      }));
 
-    addLine("user", `[command] ${text}`);
-  }
+      dc.send(JSON.stringify({
+        type: "response.create"
+      }));
 
-  document.getElementById("startBtn").addEventListener("click", startSession);
-  document.getElementById("endBtn").addEventListener("click", endSession);
+      addLine("user", `[command] ${text}`);
+    }
 
-  document.getElementById("pauseBtn").addEventListener("click", () => sendCommand("Saber pause"));
-  document.getElementById("coachBtn").addEventListener("click", () => sendCommand("Saber coach"));
-  document.getElementById("resumeBtn").addEventListener("click", () => sendCommand("Saber resume"));
-  document.getElementById("scoreBtn").addEventListener("click", () => sendCommand("Saber score"));
+    document.getElementById("startBtn").addEventListener("click", startSession);
+    document.getElementById("endBtn").addEventListener("click", endSession);
 
-  document.getElementById("replayBtn").addEventListener("click", () => {
-    addLine("system", "Replaying same seller.");
-    reviewSection.classList.remove("show");
-    setStatus("idle");
-  });
+    document.getElementById("pauseBtn").addEventListener("click", () => sendCommand("Saber pause"));
+    document.getElementById("coachBtn").addEventListener("click", () => sendCommand("Saber coach"));
+    document.getElementById("resumeBtn").addEventListener("click", () => sendCommand("Saber resume"));
+    document.getElementById("scoreBtn").addEventListener("click", () => sendCommand("Saber score"));
 
-  document.getElementById("newBtn").addEventListener("click", () => {
-    addLine("system", "Generating new random seller.");
-    reviewSection.classList.remove("show");
-    buildLocalScenario();
-    setStatus("idle");
-  });
-</script>
+    document.getElementById("replayBtn").addEventListener("click", () => {
+      addLine("system", "Replay selected.");
+      reviewSection.classList.remove("show");
+      setStatus("idle");
+    });
+
+    document.getElementById("newBtn").addEventListener("click", () => {
+      addLine("system", "New seller selected.");
+      reviewSection.classList.remove("show");
+      buildLocalScenario();
+      setStatus("idle");
+    });
+
+    setButtonsDisabled(false);
+  </script>
+</body>
+</html>
