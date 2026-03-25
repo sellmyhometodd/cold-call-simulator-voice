@@ -550,7 +550,9 @@ if (!ephemeralKey) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-      const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
+        const model = "gpt-4o-realtime-preview";
+        
+    const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
   method: "POST",
   body: offer.sdp,
   headers: {
