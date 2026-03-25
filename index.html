@@ -8,7 +8,7 @@
     :root {
       --bg: #0f1218;
       --panel: #171b23;
-      --panel-2: #1d2330;
+      --panel2: #1d2330;
       --line: #2a3140;
       --text: #f5f7fb;
       --muted: #a8b0bd;
@@ -18,9 +18,7 @@
       --bad: #e26464;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -44,9 +42,7 @@
       padding: 14px;
     }
 
-    h1, h2, h3, p {
-      margin: 0;
-    }
+    h1, h2, h3, p { margin: 0; }
 
     h1 {
       font-size: 24px;
@@ -62,21 +58,19 @@
 
     label {
       display: block;
-      margin: 0 0 6px;
+      margin-bottom: 6px;
       font-size: 12px;
       color: var(--muted);
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: .06em;
     }
 
-    select,
-    button,
-    input {
+    select, input, button {
       width: 100%;
       border-radius: 12px;
       border: 1px solid var(--line);
-      background: var(--panel-2);
+      background: var(--panel2);
       color: var(--text);
       padding: 12px 14px;
       font: inherit;
@@ -87,7 +81,7 @@
     }
 
     button:disabled {
-      opacity: 0.6;
+      opacity: .6;
       cursor: not-allowed;
     }
 
@@ -124,13 +118,8 @@
       background: var(--warn);
     }
 
-    .dot.live {
-      background: var(--good);
-    }
-
-    .dot.failed {
-      background: var(--bad);
-    }
+    .dot.live { background: var(--good); }
+    .dot.failed { background: var(--bad); }
 
     .transcript {
       height: 340px;
@@ -149,21 +138,10 @@
       font-size: 14px;
     }
 
-    .user {
-      color: #ffd9c7;
-    }
-
-    .ai {
-      color: #dbe2ef;
-    }
-
-    .coach {
-      color: #8fe0b2;
-    }
-
-    .system {
-      color: var(--muted);
-    }
+    .user { color: #ffd9c7; }
+    .ai { color: #dbe2ef; }
+    .coach { color: #8fe0b2; }
+    .system { color: var(--muted); }
 
     .controls {
       display: grid;
@@ -199,7 +177,7 @@
       margin-bottom: 8px;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: .06em;
     }
 
     .score-list {
@@ -222,9 +200,7 @@
     }
 
     @media (max-width: 700px) {
-      .grid,
-      .controls,
-      .review-grid {
+      .grid, .controls, .review-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -236,7 +212,6 @@
       <h1>Cold Call Simulator</h1>
       <p class="sub">
         Full Realtime voice version. Use the wake word <strong>Saber</strong> for commands.
-        This version removes browser speech recognition, browser text-to-speech, and canned local responses.
       </p>
     </section>
 
@@ -267,7 +242,7 @@
         </div>
       </div>
 
-      <div style="margin-top: 10px;" class="grid">
+      <div class="grid" style="margin-top:10px;">
         <div>
           <label for="voiceType">Voice</label>
           <select id="voiceType">
@@ -293,17 +268,17 @@
         </div>
       </div>
 
-      <div style="margin-top: 10px;">
+      <div style="margin-top:10px;">
         <label for="backendUrl">Railway Backend URL</label>
         <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
       </div>
 
-      <div class="grid" style="margin-top: 12px;">
+      <div class="grid" style="margin-top:12px;">
         <button id="startBtn" class="btn-primary">Start Voice Session</button>
         <button id="endBtn" class="btn-secondary">End Session</button>
       </div>
 
-      <div style="margin-top: 10px;" class="small">
+      <div class="small" style="margin-top:10px;">
         Commands: <strong>Saber pause</strong>, <strong>Saber coach</strong>,
         <strong>Saber resume</strong>, <strong>Saber score</strong>, <strong>Saber end</strong>
       </div>
@@ -346,7 +321,7 @@
         </div>
         <div class="mini">
           <h3>Replay</h3>
-          <div class="controls" style="margin-top: 0;">
+          <div class="controls" style="margin-top:0;">
             <button id="replayBtn" class="btn-secondary">Replay Same Seller</button>
             <button id="newBtn" class="btn-secondary">New Random Seller</button>
           </div>
@@ -385,7 +360,7 @@
 
     function addLine(type, text) {
       const div = document.createElement("div");
-      div.className = `line ${type}`;
+      div.className = "line " + type;
       div.textContent = text;
       transcript.appendChild(div);
       transcript.scrollTop = transcript.scrollHeight;
@@ -398,7 +373,7 @@
     function buildLocalScenario() {
       const leadType = document.getElementById("leadType").value;
       currentScenario = {
-        leadType,
+        leadType: leadType,
         disc: randomItem(["D", "I", "S", "C"]),
         frustration: randomItem(["Low", "Medium", "High"]),
         motivation: randomItem(["Low", "Medium", "High"]),
@@ -427,30 +402,54 @@
       ];
 
       document.getElementById("scorecards").innerHTML = scorecards
-        .map(([k, v]) => `<div>${k}: <strong>${v}</strong></div>`)
+        .map(function(pair) {
+          return "<div>" + pair[0] + ": <strong>" + pair[1] + "</strong></div>";
+        })
         .join("");
 
-      document.getElementById("blindReveal").innerHTML = `
-        Lead Type: <strong>${currentScenario.leadType}</strong><br>
-        DISC: <strong>${currentScenario.disc}</strong><br>
-        Frustration: <strong>${currentScenario.frustration}</strong><br>
-        Motivation: <strong>${currentScenario.motivation}</strong><br>
-        Mood: <strong>${currentScenario.mood}</strong>
-      `;
+      document.getElementById("blindReveal").innerHTML =
+        "Lead Type: <strong>" + currentScenario.leadType + "</strong><br>" +
+        "DISC: <strong>" + currentScenario.disc + "</strong><br>" +
+        "Frustration: <strong>" + currentScenario.frustration + "</strong><br>" +
+        "Motivation: <strong>" + currentScenario.motivation + "</strong><br>" +
+        "Mood: <strong>" + currentScenario.mood + "</strong>";
 
-      document.getElementById("stateChanges").innerHTML = `
-        Trust: <strong>${currentScenario.trustStart} → ${currentScenario.trustEnd}</strong><br>
-        Defensiveness: <strong>${currentScenario.defensiveStart} → ${currentScenario.defensiveEnd}</strong><br>
-        Openness: <strong>${currentScenario.opennessStart} → ${currentScenario.opennessEnd}</strong>
-      `;
+      document.getElementById("stateChanges").innerHTML =
+        "Trust: <strong>" + currentScenario.trustStart + " → " + currentScenario.trustEnd + "</strong><br>" +
+        "Defensiveness: <strong>" + currentScenario.defensiveStart + " → " + currentScenario.defensiveEnd + "</strong><br>" +
+        "Openness: <strong>" + currentScenario.opennessStart + " → " + currentScenario.opennessEnd + "</strong>";
     }
 
-    function setButtonsDisabled(disabled) {
-      document.getElementById("startBtn").disabled = disabled;
-      document.getElementById("pauseBtn").disabled = !disabled;
-      document.getElementById("coachBtn").disabled = !disabled;
-      document.getElementById("resumeBtn").disabled = !disabled;
-      document.getElementById("scoreBtn").disabled = !disabled;
+    function setButtonsLive(live) {
+      document.getElementById("startBtn").disabled = live;
+    }
+
+    async function cleanupConnection() {
+      try {
+        if (dc) {
+          dc.close();
+          dc = null;
+        }
+
+        if (pc) {
+          pc.close();
+          pc = null;
+        }
+
+        if (localStream) {
+          localStream.getTracks().forEach(function(track) {
+            track.stop();
+          });
+          localStream = null;
+        }
+
+        remoteAudio.pause();
+        remoteAudio.srcObject = null;
+      } catch (err) {
+        console.error("Cleanup error:", err);
+      }
+
+      sessionLive = false;
     }
 
     async function startSession() {
@@ -459,7 +458,7 @@
       reviewSection.classList.remove("show");
       buildLocalScenario();
       setStatus("live");
-      setButtonsDisabled(true);
+      setButtonsLive(true);
       addLine("system", "Requesting microphone and creating realtime session...");
 
       const backendUrl = document.getElementById("backendUrl").value.trim();
@@ -479,7 +478,7 @@
           }
         });
 
-        const sessionResp = await fetch(`${backendUrl}/session`, {
+        const sessionResp = await fetch(backendUrl + "/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -489,10 +488,10 @@
 
         if (!sessionResp.ok) {
           console.error(sessionData);
-          throw new Error(`Failed to create realtime session: ${JSON.stringify(sessionData)}`);
+          throw new Error("Failed to create realtime session.");
         }
 
-        const ephemeralKey = sessionData.client_secret?.value;
+        const ephemeralKey = sessionData.client_secret && sessionData.client_secret.value;
         if (!ephemeralKey) {
           console.error(sessionData);
           throw new Error("No client secret returned from backend.");
@@ -500,25 +499,25 @@
 
         pc = new RTCPeerConnection();
 
-        pc.ontrack = (event) => {
+        pc.ontrack = function(event) {
           remoteAudio.srcObject = event.streams[0];
-          remoteAudio.play().catch((err) => {
+          remoteAudio.play().catch(function(err) {
             console.error("Remote audio play failed:", err);
             addLine("coach", "Audio playback was blocked by the browser.");
           });
         };
 
-        localStream.getTracks().forEach((track) => {
+        localStream.getTracks().forEach(function(track) {
           pc.addTrack(track, localStream);
         });
 
         dc = pc.createDataChannel("oai-events");
 
-        dc.onopen = () => {
+        dc.onopen = function() {
           addLine("system", "Realtime voice connected.");
         };
 
-        dc.onmessage = (event) => {
+        dc.onmessage = function(event) {
           try {
             const msg = JSON.parse(event.data);
 
@@ -530,17 +529,13 @@
               addLine("user", msg.transcript);
 
               const lower = msg.transcript.toLowerCase();
-              if (lower.includes("saber score")) {
-                showReview();
-              }
-
-              if (lower.includes("saber end")) {
+              if (lower.includes("saber score") || lower.includes("saber end")) {
                 showReview();
               }
             }
 
             if (msg.type === "error") {
-              addLine("coach", `Realtime error: ${JSON.stringify(msg.error)}`);
+              addLine("coach", "Realtime error: " + JSON.stringify(msg.error));
             }
           } catch (err) {
             console.error("Data channel parse error:", err);
@@ -551,18 +546,18 @@
         await pc.setLocalDescription(offer);
 
         const model = "gpt-4o-realtime-preview";
-        const sdpResp = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
+        const sdpResp = await fetch("https://api.openai.com/v1/realtime?model=" + model, {
           method: "POST",
           body: offer.sdp,
           headers: {
-            Authorization: `Bearer ${ephemeralKey}`,
+            Authorization: "Bearer " + ephemeralKey,
             "Content-Type": "application/sdp"
           }
         });
 
         if (!sdpResp.ok) {
           const text = await sdpResp.text();
-          throw new Error(`Realtime SDP handshake failed: ${text}`);
+          throw new Error("Realtime SDP handshake failed: " + text);
         }
 
         const answerSdp = await sdpResp.text();
@@ -573,46 +568,20 @@
         });
 
         sessionLive = true;
-        addLine("system", "Live session started. The seller should answer first.");
+        addLine("system", "Live session started.");
       } catch (err) {
         console.error(err);
         setStatus("failed");
-        setButtonsDisabled(false);
+        setButtonsLive(false);
         addLine("coach", err.message || "Could not start realtime session.");
         await cleanupConnection();
       }
     }
 
-    async function cleanupConnection() {
-      try {
-        if (dc) {
-          dc.close();
-          dc = null;
-        }
-
-        if (pc) {
-          pc.close();
-          pc = null;
-        }
-
-        if (localStream) {
-          localStream.getTracks().forEach((track) => track.stop());
-          localStream = null;
-        }
-
-        remoteAudio.pause();
-        remoteAudio.srcObject = null;
-      } catch (err) {
-        console.error("Cleanup error:", err);
-      }
-
-      sessionLive = false;
-    }
-
     async function endSession() {
       await cleanupConnection();
       setStatus("idle");
-      setButtonsDisabled(false);
+      setButtonsLive(false);
       addLine("system", "Session ended.");
       showReview();
     }
@@ -631,7 +600,7 @@
           content: [
             {
               type: "input_text",
-              text
+              text: text
             }
           ]
         }
@@ -641,31 +610,30 @@
         type: "response.create"
       }));
 
-      addLine("user", `[command] ${text}`);
+      addLine("user", "[command] " + text);
     }
 
     document.getElementById("startBtn").addEventListener("click", startSession);
     document.getElementById("endBtn").addEventListener("click", endSession);
+    document.getElementById("pauseBtn").addEventListener("click", function() { sendCommand("Saber pause"); });
+    document.getElementById("coachBtn").addEventListener("click", function() { sendCommand("Saber coach"); });
+    document.getElementById("resumeBtn").addEventListener("click", function() { sendCommand("Saber resume"); });
+    document.getElementById("scoreBtn").addEventListener("click", function() { sendCommand("Saber score"); });
 
-    document.getElementById("pauseBtn").addEventListener("click", () => sendCommand("Saber pause"));
-    document.getElementById("coachBtn").addEventListener("click", () => sendCommand("Saber coach"));
-    document.getElementById("resumeBtn").addEventListener("click", () => sendCommand("Saber resume"));
-    document.getElementById("scoreBtn").addEventListener("click", () => sendCommand("Saber score"));
-
-    document.getElementById("replayBtn").addEventListener("click", () => {
+    document.getElementById("replayBtn").addEventListener("click", function() {
       addLine("system", "Replay selected.");
       reviewSection.classList.remove("show");
       setStatus("idle");
     });
 
-    document.getElementById("newBtn").addEventListener("click", () => {
+    document.getElementById("newBtn").addEventListener("click", function() {
       addLine("system", "New seller selected.");
       reviewSection.classList.remove("show");
       buildLocalScenario();
       setStatus("idle");
     });
 
-    setButtonsDisabled(false);
+    setButtonsLive(false);
   </script>
 </body>
 </html>
