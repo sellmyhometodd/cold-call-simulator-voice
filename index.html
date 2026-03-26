@@ -126,7 +126,7 @@
     }
 
     .transcript {
-      height: 380px;
+      height: 420px;
       overflow: auto;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -290,7 +290,7 @@
     <section class="card">
       <h1>Cold Call Simulator</h1>
       <p class="sub">
-        Full Realtime voice version with live progress tracking.
+        Full Realtime voice version with seller name labels and seller-first answer flow.
       </p>
     </section>
 
@@ -568,7 +568,8 @@
       liveState.startOpenness = liveState.openness;
       liveState.startAppointmentReadiness = liveState.appointmentReadiness;
 
-      document.getElementById("liveObjectiveText").textContent = `${objective} — ${leadType}`;
+      document.getElementById("liveObjectiveText").textContent =
+        `${objective} — ${leadType}`;
       updateLivePanel();
     }
 
@@ -906,6 +907,7 @@
 
         console.log("Session data from backend:", sessionData);
         addLine("system", "Session response received from backend.");
+        addLine("system", "Calling " + sellerName + "...");
 
         if (!sessionResp.ok) {
           console.error(sessionData);
@@ -937,6 +939,7 @@
 
         dc.onopen = function() {
           addLine("system", "Realtime voice connected.");
+          addLine("system", sellerName + " is answering...");
         };
 
         dc.onmessage = function(event) {
@@ -958,106 +961,4 @@
               }
             }
 
-            if (msg.type === "error") {
-              addLine("coach", "Realtime error: " + JSON.stringify(msg.error));
-            }
-          } catch (err) {
-            console.error("Data channel parse error:", err);
-          }
-        };
-
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-
-        const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            Authorization: "Bearer " + ephemeralKey,
-            "Content-Type": "application/sdp"
-          }
-        });
-
-        if (!sdpResp.ok) {
-          const text = await sdpResp.text();
-          throw new Error("Realtime SDP handshake failed: " + text);
-        }
-
-        const answerSdp = await sdpResp.text();
-
-        await pc.setRemoteDescription({
-          type: "answer",
-          sdp: answerSdp
-        });
-
-        sessionLive = true;
-        addLine("system", "Live session started.");
-      } catch (err) {
-        console.error(err);
-        setStatus("failed");
-        setButtonsLive(false);
-        addLine("coach", err.message || "Could not start realtime session.");
-        await cleanupConnection();
-      }
-    }
-
-    async function endSession() {
-      await cleanupConnection();
-      setStatus("idle");
-      setButtonsLive(false);
-      addLine("system", "Session ended.");
-      showReview();
-    }
-
-    function sendCommand(text) {
-      if (!dc || dc.readyState !== "open") {
-        addLine("coach", "No live realtime channel.");
-        return;
-      }
-
-      dc.send(JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: text
-            }
-          ]
-        }
-      }));
-
-      dc.send(JSON.stringify({
-        type: "response.create"
-      }));
-
-      addLine("user", "You: [command] " + text);
-    }
-
-    document.getElementById("startBtn").addEventListener("click", startSession);
-    document.getElementById("endBtn").addEventListener("click", endSession);
-    document.getElementById("pauseBtn").addEventListener("click", function() { sendCommand("Saber pause"); });
-    document.getElementById("coachBtn").addEventListener("click", function() { sendCommand("Saber coach"); });
-    document.getElementById("resumeBtn").addEventListener("click", function() { sendCommand("Saber resume"); });
-    document.getElementById("scoreBtn").addEventListener("click", function() { sendCommand("Saber score"); });
-
-    document.getElementById("replayBtn").addEventListener("click", function() {
-      addLine("system", "Replay selected.");
-      reviewSection.classList.remove("show");
-      setStatus("idle");
-    });
-
-    document.getElementById("newBtn").addEventListener("click", function() {
-      addLine("system", "New seller selected.");
-      reviewSection.classList.remove("show");
-      buildLocalScenario();
-      setStatus("idle");
-    });
-
-    setButtonsLive(false);
-    updateLivePanel();
-  </script>
-</body>
-</html>
+            if (msg.type ===
