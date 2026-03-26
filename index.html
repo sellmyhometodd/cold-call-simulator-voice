@@ -493,7 +493,10 @@ Commands: <strong>Saber pause</strong>, <strong>Saber coach</strong>,
 </div>
 
 <audio id="remoteAudio" class="hidden-audio" autoplay playsinline></audio>
-
+<audio id="ringtoneAudio" preload="auto">
+  <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/" type="audio/wav">
+</audio>
+  
 <script>
 let pc = null;
 let dc = null;
@@ -582,7 +585,30 @@ liveState.startAppointmentReadiness = liveState.appointmentReadiness;
 updateLivePanel();
 }
 
-function updateMetric(idPrefix, value, max, deltaText) {
+const ringtoneAudio = document.getElementById("ringtoneAudio");
+
+function playRingOnce() {
+  return new Promise((resolve) => {
+    ringtoneAudio.currentTime = 0;
+
+    const done = () => {
+      ringtoneAudio.removeEventListener("ended", done);
+      resolve();
+    };
+
+    ringtoneAudio.addEventListener("ended", done, { once: true });
+
+    ringtoneAudio.play().catch(() => {
+      resolve();
+    });
+
+    setTimeout(() => {
+      resolve();
+    }, 1800);
+  });
+}
+  
+  function updateMetric(idPrefix, value, max, deltaText) {
 document.getElementById(idPrefix + "Value").textContent =
 idPrefix === "objective" ? `${value}%` : `${value}/${max}`;
 
