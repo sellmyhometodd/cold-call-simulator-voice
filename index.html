@@ -361,6 +361,10 @@
         </select>
       </div>
 
+      <div style="margin-top:10px;">
+        <label for="backendUrl">Railway Backend URL</label>
+        <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
+      </div>
 
       <div class="grid" style="margin-top:12px;">
         <button id="startBtn" class="btn-primary">Start Voice Session</button>
@@ -380,12 +384,6 @@
           <span id="statusText">Idle</span>
         </div>
 
-      <div style="margin-top:10px;">
-        <label for="backendUrl">Railway Backend URL</label>
-        <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
-      </div>
-
-        
         <div id="transcript" class="transcript">
           <div class="line system">Press Start Voice Session and allow microphone access.</div>
         </div>
@@ -403,6 +401,11 @@
           <div class="objective-box">
             <strong>Live Objective</strong>
             <div id="liveObjectiveText" class="small">No session started.</div>
+          </div>
+
+          <div class="objective-box">
+            <strong>Seller</strong>
+            <div id="liveSellerName" class="small">Waiting for session...</div>
           </div>
 
           <div class="metric">
@@ -489,6 +492,7 @@
     let localStream = null;
     let currentScenario = null;
     let sessionLive = false;
+    let sellerName = "Seller";
 
     const transcript = document.getElementById("transcript");
     const statusText = document.getElementById("statusText");
@@ -564,8 +568,7 @@
       liveState.startOpenness = liveState.openness;
       liveState.startAppointmentReadiness = liveState.appointmentReadiness;
 
-      document.getElementById("liveObjectiveText").textContent =
-        `${objective} — ${leadType}`;
+      document.getElementById("liveObjectiveText").textContent = `${objective} — ${leadType}`;
       updateLivePanel();
     }
 
@@ -816,6 +819,7 @@
         .join("");
 
       document.getElementById("blindReveal").innerHTML =
+        "Seller: <strong>" + sellerName + "</strong><br>" +
         "Lead Type: <strong>" + currentScenario.leadType + "</strong><br>" +
         "Objective: <strong>" + currentScenario.objective + "</strong><br>" +
         "DISC: <strong>" + currentScenario.disc + "</strong><br>" +
@@ -897,6 +901,9 @@
         });
 
         const sessionData = await sessionResp.json();
+        sellerName = sessionData.sellerName || "Seller";
+        document.getElementById("liveSellerName").textContent = sellerName;
+
         console.log("Session data from backend:", sessionData);
         addLine("system", "Session response received from backend.");
 
@@ -937,12 +944,12 @@
             const msg = JSON.parse(event.data);
 
             if (msg.type === "response.audio_transcript.done" && msg.transcript) {
-              addLine("ai", msg.transcript);
+              addLine("ai", sellerName + ": " + msg.transcript);
               analyzeSellerTurn(msg.transcript);
             }
 
             if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
-              addLine("user", msg.transcript);
+              addLine("user", "You: " + msg.transcript);
               analyzeUserTurn(msg.transcript);
 
               const lower = msg.transcript.toLowerCase();
@@ -1026,7 +1033,7 @@
         type: "response.create"
       }));
 
-      addLine("user", "[command] " + text);
+      addLine("user", "You: [command] " + text);
     }
 
     document.getElementById("startBtn").addEventListener("click", startSession);
