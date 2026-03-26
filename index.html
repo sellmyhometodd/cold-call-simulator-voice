@@ -1012,8 +1012,32 @@
           sdp: answerSdp
         });
 
-        sessionLive = true;
-        addLine("system", "Wait for " + sellerName + " to speak first.");
+       sessionLive = true;
+
+addLine("system", "Wait for " + sellerName + " to speak first...");
+
+setTimeout(() => {
+  if (dc && dc.readyState === "open") {
+    dc.send(JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: "PHONE_ANSWER_NOW"
+          }
+        ]
+      }
+    }));
+
+    dc.send(JSON.stringify({
+      type: "response.create"
+    }));
+  }
+}, 400);
+        
       } catch (err) {
         console.error(err);
         setStatus("failed");
