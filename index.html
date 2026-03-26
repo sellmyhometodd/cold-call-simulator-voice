@@ -290,7 +290,7 @@
     <section class="card">
       <h1>Cold Call Simulator</h1>
       <p class="sub">
-        Full Realtime voice version with live progress tracking and audio device selection.
+        Full Realtime voice version with live progress tracking.
       </p>
     </section>
 
@@ -361,31 +361,10 @@
         </select>
       </div>
 
-      <div class="grid" style="margin-top:10px;">
-        <div>
-          <label for="inputDevice">Microphone</label>
-          <select id="inputDevice">
-            <option value="">Default microphone</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="outputDevice">Speaker / Headset Output</label>
-          <select id="outputDevice">
-            <option value="">Default output</option>
-          </select>
-        </div>
+      <div style="margin-top:10px;">
+        <label for="backendUrl">Railway Backend URL</label>
+        <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
       </div>
-
-      <div class="grid" style="margin-top:10px;">
-        <div>
-          <button id="refreshDevicesBtn" class="btn-secondary">Refresh Audio Devices</button>
-        </div>
-        <div class="small" id="audioSupportText" style="display:flex;align-items:center;">
-          Output routing works best in Chrome / Edge desktop.
-        </div>
-      </div>
-
 
       <div class="grid" style="margin-top:12px;">
         <button id="startBtn" class="btn-primary">Start Voice Session</button>
@@ -508,17 +487,12 @@
     let localStream = null;
     let currentScenario = null;
     let sessionLive = false;
-    let currentInputDeviceId = "";
-    let currentOutputDeviceId = "";
 
     const transcript = document.getElementById("transcript");
     const statusText = document.getElementById("statusText");
     const statusDot = document.getElementById("statusDot");
     const reviewSection = document.getElementById("reviewSection");
     const remoteAudio = document.getElementById("remoteAudio");
-    const inputDeviceSelect = document.getElementById("inputDevice");
-    const outputDeviceSelect = document.getElementById("outputDevice");
-    const audioSupportText = document.getElementById("audioSupportText");
 
     const liveState = {
       trust: 3,
@@ -859,79 +833,6 @@
       document.getElementById("startBtn").disabled = live;
     }
 
-    async function applyOutputDevice() {
-      currentOutputDeviceId = outputDeviceSelect.value || "";
-      if (!("setSinkId" in HTMLMediaElement.prototype)) {
-        audioSupportText.textContent = "Output routing is not supported in this browser. Use Chrome / Edge desktop.";
-        return;
-      }
-
-      try {
-        await remoteAudio.setSinkId(currentOutputDeviceId || "");
-        audioSupportText.textContent = currentOutputDeviceId
-          ? "Output routed to selected device."
-          : "Using default output device.";
-      } catch (err) {
-        console.error("setSinkId error:", err);
-        audioSupportText.textContent = "Could not switch output device. Browser or device may not support it.";
-        addLine("coach", "Could not switch output device.");
-      }
-    }
-
-    async function populateAudioDevices() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-
-        const audioInputs = devices.filter(d => d.kind === "audioinput");
-        const audioOutputs = devices.filter(d => d.kind === "audiooutput");
-
-        inputDeviceSelect.innerHTML = '<option value="">Default microphone</option>';
-        outputDeviceSelect.innerHTML = '<option value="">Default output</option>';
-
-        audioInputs.forEach((device, index) => {
-          const option = document.createElement("option");
-          option.value = device.deviceId;
-          option.textContent = device.label || `Microphone ${index + 1}`;
-          inputDeviceSelect.appendChild(option);
-        });
-
-        audioOutputs.forEach((device, index) => {
-          const option = document.createElement("option");
-          option.value = device.deviceId;
-          option.textContent = device.label || `Output ${index + 1}`;
-          outputDeviceSelect.appendChild(option);
-        });
-
-        if (currentInputDeviceId) {
-          inputDeviceSelect.value = currentInputDeviceId;
-        }
-
-        if (currentOutputDeviceId) {
-          outputDeviceSelect.value = currentOutputDeviceId;
-        }
-
-        if (!("setSinkId" in HTMLMediaElement.prototype)) {
-          audioSupportText.textContent = "Output routing is not supported in this browser. Use Chrome / Edge desktop.";
-        } else {
-          audioSupportText.textContent = "Choose a Bluetooth headset for mic and output if needed.";
-        }
-      } catch (err) {
-        console.error("enumerateDevices error:", err);
-        addLine("coach", "Could not enumerate audio devices.");
-      }
-    }
-
-    async function ensureDevicePermissionAndRefresh() {
-      try {
-        const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        tempStream.getTracks().forEach(track => track.stop());
-        await populateAudioDevices();
-      } catch (err) {
-        console.error("device permission error:", err);
-        addLine("coach", "Microphone permission is required to list audio devices.");
-      }
-    }
-
     async function cleanupConnection() {
       try {
         if (dc) {
@@ -978,39 +879,14 @@
         voice: document.getElementById("voiceType").value
       };
 
-      currentInputDeviceId = inputDeviceSelect.value || "";
-      currentOutputDeviceId = outputDeviceSelect.value || "";
-
       try {
-        const audioConstraints = currentInputDeviceId
-          ? {
-              deviceId: { exact: currentInputDeviceId },
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
-            }
-          : {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
-            };
-
         localStream = await navigator.mediaDevices.getUserMedia({
-          audio: audioConstraints
-        });
-
-        await populateAudioDevices();
-        await applyOutputDevice();
-
-        if (currentInputDeviceId) {
-          const activeTrack = localStream.getAudioTracks()[0];
-          const settings = activeTrack.getSettings ? activeTrack.getSettings() : {};
-          if (settings.deviceId && settings.deviceId !== currentInputDeviceId) {
-            addLine("coach", "Requested microphone did not match active input device.");
-          } else {
-            addLine("system", "Selected microphone connected.");
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
           }
-        }
+        });
 
         const sessionResp = await fetch(backendUrl + "/session", {
           method: "POST",
@@ -1036,9 +912,8 @@
 
         pc = new RTCPeerConnection();
 
-        pc.ontrack = async function(event) {
+        pc.ontrack = function(event) {
           remoteAudio.srcObject = event.streams[0];
-          await applyOutputDevice();
           remoteAudio.play().catch(function(err) {
             console.error("Remote audio play failed:", err);
             addLine("coach", "Audio playback was blocked by the browser.");
@@ -1172,25 +1047,8 @@
       setStatus("idle");
     });
 
-    document.getElementById("refreshDevicesBtn").addEventListener("click", ensureDevicePermissionAndRefresh);
-    inputDeviceSelect.addEventListener("change", function() {
-      currentInputDeviceId = inputDeviceSelect.value || "";
-      addLine("system", currentInputDeviceId ? "Microphone selection updated." : "Using default microphone.");
-    });
-    outputDeviceSelect.addEventListener("change", async function() {
-      currentOutputDeviceId = outputDeviceSelect.value || "";
-      await applyOutputDevice();
-      addLine("system", currentOutputDeviceId ? "Output selection updated." : "Using default output.");
-    });
-
-    navigator.mediaDevices.addEventListener?.("devicechange", async () => {
-      await populateAudioDevices();
-      addLine("system", "Audio device list refreshed.");
-    });
-
     setButtonsLive(false);
     updateLivePanel();
-    populateAudioDevices();
   </script>
 </body>
 </html>
