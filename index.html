@@ -29,7 +29,7 @@
     }
 
     .wrap {
-      max-width: 760px;
+      max-width: 900px;
       margin: 0 auto;
       display: grid;
       gap: 12px;
@@ -89,12 +89,6 @@
       gap: 10px;
     }
 
-    .grid-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
-
     .btn-primary {
       background: linear-gradient(180deg, #ef8448, var(--accent));
       border: none;
@@ -125,8 +119,14 @@
     .dot.live { background: var(--good); }
     .dot.failed { background: var(--bad); }
 
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 12px;
+    }
+
     .transcript {
-      height: 340px;
+      height: 380px;
       overflow: auto;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -203,8 +203,83 @@
       pointer-events: none;
     }
 
+    .live-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      background: #10141c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      font-weight: 700;
+    }
+
+    .bar {
+      width: 100%;
+      height: 10px;
+      background: #232938;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: width .25s ease;
+    }
+
+    .fill-trust { background: var(--good); }
+    .fill-defensive { background: var(--bad); }
+    .fill-open { background: #6aa8ff; }
+    .fill-appointment { background: #c985ff; }
+    .fill-objective { background: var(--accent); }
+
+    .delta {
+      font-size: 12px;
+      margin-top: 6px;
+      color: var(--muted);
+    }
+
+    .objective-box {
+      background: #10141c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .objective-box strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 700px) {
-      .grid, .grid-3, .controls, .review-grid {
+      .grid, .controls, .review-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -215,7 +290,7 @@
     <section class="card">
       <h1>Cold Call Simulator</h1>
       <p class="sub">
-        Full Realtime voice version. Use the wake word <strong>Saber</strong> for commands.
+        Full Realtime voice version with live progress tracking.
       </p>
     </section>
 
@@ -302,23 +377,79 @@
       </div>
     </section>
 
-    <section class="card">
-      <div class="status">
-        <span id="statusDot" class="dot"></span>
-        <span id="statusText">Idle</span>
-      </div>
+    <div class="main-layout">
+      <section class="card">
+        <div class="status">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Idle</span>
+        </div>
 
-      <div id="transcript" class="transcript">
-        <div class="line system">Press Start Voice Session and allow microphone access.</div>
-      </div>
+        <div id="transcript" class="transcript">
+          <div class="line system">Press Start Voice Session and allow microphone access.</div>
+        </div>
 
-      <div class="controls">
-        <button id="pauseBtn" class="btn-secondary">Saber Pause</button>
-        <button id="coachBtn" class="btn-secondary">Saber Coach</button>
-        <button id="resumeBtn" class="btn-secondary">Saber Resume</button>
-        <button id="scoreBtn" class="btn-secondary">Saber Score</button>
-      </div>
-    </section>
+        <div class="controls">
+          <button id="pauseBtn" class="btn-secondary">Saber Pause</button>
+          <button id="coachBtn" class="btn-secondary">Saber Coach</button>
+          <button id="resumeBtn" class="btn-secondary">Saber Resume</button>
+          <button id="scoreBtn" class="btn-secondary">Saber Score</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="live-panel">
+          <div class="objective-box">
+            <strong>Live Objective</strong>
+            <div id="liveObjectiveText" class="small">No session started.</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Trust</span>
+              <span id="trustValue" class="metric-value">3/10</span>
+            </div>
+            <div class="bar"><div id="trustBar" class="bar-fill fill-trust"></div></div>
+            <div id="trustDelta" class="delta">Neutral</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Defensiveness</span>
+              <span id="defensiveValue" class="metric-value">5/10</span>
+            </div>
+            <div class="bar"><div id="defensiveBar" class="bar-fill fill-defensive"></div></div>
+            <div id="defensiveDelta" class="delta">Neutral</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Openness</span>
+              <span id="openValue" class="metric-value">3/10</span>
+            </div>
+            <div class="bar"><div id="openBar" class="bar-fill fill-open"></div></div>
+            <div id="openDelta" class="delta">Neutral</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Appointment Readiness</span>
+              <span id="appointmentValue" class="metric-value">1/10</span>
+            </div>
+            <div class="bar"><div id="appointmentBar" class="bar-fill fill-appointment"></div></div>
+            <div id="appointmentDelta" class="delta">Neutral</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Objective Progress</span>
+              <span id="objectiveValue" class="metric-value">0%</span>
+            </div>
+            <div class="bar"><div id="objectiveBar" class="bar-fill fill-objective"></div></div>
+            <div id="objectiveDelta" class="delta">Waiting for conversation</div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <section id="reviewSection" class="card review">
       <div class="review-grid">
@@ -363,6 +494,22 @@
     const reviewSection = document.getElementById("reviewSection");
     const remoteAudio = document.getElementById("remoteAudio");
 
+    const liveState = {
+      trust: 3,
+      defensiveness: 5,
+      openness: 3,
+      appointmentReadiness: 1,
+      objectiveProgress: 0,
+      startTrust: 3,
+      startDefensiveness: 5,
+      startOpenness: 3,
+      startAppointmentReadiness: 1
+    };
+
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
     function setStatus(mode) {
       statusDot.className = "dot";
       if (mode === "live") {
@@ -398,14 +545,251 @@
         disc: randomItem(["D", "I", "S", "C"]),
         frustration: randomItem(["Low", "Medium", "High"]),
         motivation: randomItem(["Low", "Medium", "High"]),
-        mood: randomItem(["Calm", "Skeptical", "Defensive", "Frustrated"]),
-        trustStart: 3,
-        trustEnd: 6,
-        defensiveStart: 7,
-        defensiveEnd: 5,
-        opennessStart: 2,
-        opennessEnd: 5
+        mood: randomItem(["Calm", "Skeptical", "Defensive", "Frustrated"])
       };
+
+      const difficulty = document.getElementById("difficulty").value;
+
+      liveState.trust = difficulty === "Easy" ? 4 : difficulty === "Expert" ? 1 : 3;
+      liveState.defensiveness = difficulty === "Easy" ? 3 : difficulty === "Expert" ? 8 : 5;
+      liveState.openness = 3;
+      liveState.appointmentReadiness =
+        objective === "Set Appointment" || objective === "Confirm Appointment" ? 3 : 1;
+      liveState.objectiveProgress = 0;
+
+      liveState.startTrust = liveState.trust;
+      liveState.startDefensiveness = liveState.defensiveness;
+      liveState.startOpenness = liveState.openness;
+      liveState.startAppointmentReadiness = liveState.appointmentReadiness;
+
+      document.getElementById("liveObjectiveText").textContent =
+        `${objective} — ${leadType}`;
+      updateLivePanel();
+    }
+
+    function updateMetric(idPrefix, value, max, deltaText) {
+      document.getElementById(idPrefix + "Value").textContent =
+        idPrefix === "objective" ? `${value}%` : `${value}/${max}`;
+
+      const width = idPrefix === "objective" ? value : (value / max) * 100;
+      document.getElementById(idPrefix + "Bar").style.width = `${width}%`;
+      document.getElementById(idPrefix + "Delta").textContent = deltaText;
+    }
+
+    function updateLivePanel() {
+      updateMetric(
+        "trust",
+        liveState.trust,
+        10,
+        liveState.trust >= 7 ? "Strong rapport" : liveState.trust >= 4 ? "Building" : "Fragile"
+      );
+
+      updateMetric(
+        "defensive",
+        liveState.defensiveness,
+        10,
+        liveState.defensiveness >= 7 ? "High resistance" : liveState.defensiveness >= 4 ? "Guarded" : "Relaxed"
+      );
+
+      updateMetric(
+        "open",
+        liveState.openness,
+        10,
+        liveState.openness >= 7 ? "Seller is revealing more" : liveState.openness >= 4 ? "Some openness" : "Closed off"
+      );
+
+      updateMetric(
+        "appointment",
+        liveState.appointmentReadiness,
+        10,
+        liveState.appointmentReadiness >= 7 ? "Strong close window" : liveState.appointmentReadiness >= 4 ? "Possible if handled well" : "Too early"
+      );
+
+      updateMetric(
+        "objective",
+        liveState.objectiveProgress,
+        100,
+        liveState.objectiveProgress >= 70 ? "Objective advancing well" : liveState.objectiveProgress >= 40 ? "Partial progress" : "Needs work"
+      );
+    }
+
+    function applyStateChange(changes) {
+      if (typeof changes.trust === "number") {
+        liveState.trust = clamp(liveState.trust + changes.trust, 1, 10);
+      }
+      if (typeof changes.defensiveness === "number") {
+        liveState.defensiveness = clamp(liveState.defensiveness + changes.defensiveness, 1, 10);
+      }
+      if (typeof changes.openness === "number") {
+        liveState.openness = clamp(liveState.openness + changes.openness, 1, 10);
+      }
+      if (typeof changes.appointmentReadiness === "number") {
+        liveState.appointmentReadiness = clamp(liveState.appointmentReadiness + changes.appointmentReadiness, 1, 10);
+      }
+      if (typeof changes.objectiveProgress === "number") {
+        liveState.objectiveProgress = clamp(liveState.objectiveProgress + changes.objectiveProgress, 0, 100);
+      }
+      updateLivePanel();
+    }
+
+    function analyzeUserTurn(text) {
+      const t = text.toLowerCase();
+      const objective = document.getElementById("objectiveType").value;
+
+      let changes = {
+        trust: 0,
+        defensiveness: 0,
+        openness: 0,
+        appointmentReadiness: 0,
+        objectiveProgress: 0
+      };
+
+      const hasOpenQuestion =
+        t.includes("what") ||
+        t.includes("how") ||
+        t.includes("why") ||
+        t.includes("tell me") ||
+        t.includes("walk me through");
+
+      const hasValidation =
+        t.includes("i understand") ||
+        t.includes("that makes sense") ||
+        t.includes("i can see") ||
+        t.includes("sounds like") ||
+        t.includes("i hear you");
+
+      const tooPushy =
+        t.includes("can i come over") ||
+        t.includes("let's set an appointment") ||
+        t.includes("when can we meet") ||
+        t.includes("are you ready to list") ||
+        t.includes("sign");
+
+      const genericAgentTalk =
+        t.includes("market analysis") ||
+        t.includes("i'd love the opportunity") ||
+        t.includes("top agent") ||
+        t.includes("i can help sell your home");
+
+      const curiosity =
+        t.includes("what happened") ||
+        t.includes("what was frustrating") ||
+        t.includes("what went wrong") ||
+        t.includes("what are you hoping") ||
+        t.includes("what's your plan");
+
+      if (hasOpenQuestion) {
+        changes.trust += 1;
+        changes.openness += 1;
+        changes.objectiveProgress += 6;
+      }
+
+      if (hasValidation) {
+        changes.trust += 1;
+        changes.defensiveness -= 1;
+        changes.objectiveProgress += 5;
+      }
+
+      if (curiosity) {
+        changes.trust += 1;
+        changes.openness += 1;
+        changes.objectiveProgress += 8;
+      }
+
+      if (tooPushy) {
+        changes.defensiveness += 2;
+        changes.trust -= 1;
+        changes.appointmentReadiness -= 2;
+        changes.objectiveProgress -= 8;
+      }
+
+      if (genericAgentTalk) {
+        changes.defensiveness += 1;
+        changes.trust -= 1;
+        changes.objectiveProgress -= 5;
+      }
+
+      if (objective === "Set Appointment" && (t.includes("meet") || t.includes("appointment"))) {
+        changes.objectiveProgress += 10;
+        if (liveState.trust >= 5) {
+          changes.appointmentReadiness += 1;
+        }
+      }
+
+      if (objective === "Build Rapport" && (hasValidation || curiosity)) {
+        changes.objectiveProgress += 6;
+      }
+
+      if (objective === "Handle Objection" && (t.includes("understand") || t.includes("fair") || t.includes("makes sense"))) {
+        changes.objectiveProgress += 7;
+      }
+
+      if (objective === "Uncover Motivation" && hasOpenQuestion) {
+        changes.objectiveProgress += 8;
+      }
+
+      applyStateChange(changes);
+    }
+
+    function analyzeSellerTurn(text) {
+      const t = text.toLowerCase();
+
+      let changes = {
+        trust: 0,
+        defensiveness: 0,
+        openness: 0,
+        appointmentReadiness: 0,
+        objectiveProgress: 0
+      };
+
+      const wordCount = t.split(/\s+/).filter(Boolean).length;
+
+      if (wordCount >= 14) {
+        changes.openness += 1;
+        changes.trust += 1;
+        changes.objectiveProgress += 6;
+      } else if (wordCount <= 4) {
+        changes.defensiveness += 1;
+      }
+
+      const resistantPhrases = [
+        "not interested",
+        "we're going to wait",
+        "same agent",
+        "not paying commission",
+        "not in a rush",
+        "not right now",
+        "we're fine",
+        "call me later"
+      ];
+
+      const openPhrases = [
+        "honestly",
+        "the problem was",
+        "what happened was",
+        "we were thinking",
+        "we might",
+        "i've been considering",
+        "frustrating"
+      ];
+
+      if (resistantPhrases.some(p => t.includes(p))) {
+        changes.defensiveness += 1;
+        changes.appointmentReadiness -= 1;
+        changes.objectiveProgress -= 4;
+      }
+
+      if (openPhrases.some(p => t.includes(p))) {
+        changes.openness += 1;
+        changes.trust += 1;
+        changes.objectiveProgress += 8;
+      }
+
+      if (t.includes("maybe") || t.includes("possibly") || t.includes("we'll see")) {
+        changes.appointmentReadiness += 1;
+      }
+
+      applyStateChange(changes);
     }
 
     function showReview() {
@@ -414,13 +798,13 @@
       reviewSection.classList.add("show");
 
       const scorecards = [
-        ["Opening", "7/10"],
-        ["Rapport", "6/10"],
-        ["Control", "7/10"],
-        ["Question Quality", "7/10"],
-        ["Objection Handling", "6/10"],
-        ["Objective Execution", "6/10"],
-        ["Appointment Positioning", "5/10"]
+        ["Opening", `${clamp(Math.round((liveState.trust + (10 - liveState.defensiveness)) / 2), 1, 10)}/10`],
+        ["Rapport", `${liveState.trust}/10`],
+        ["Control", `${clamp(10 - Math.abs(liveState.defensiveness - 5), 1, 10)}/10`],
+        ["Question Quality", `${clamp(liveState.openness, 1, 10)}/10`],
+        ["Objection Handling", `${clamp(10 - liveState.defensiveness + 2, 1, 10)}/10`],
+        ["Objective Execution", `${Math.max(1, Math.round(liveState.objectiveProgress / 10))}/10`],
+        ["Appointment Positioning", `${liveState.appointmentReadiness}/10`]
       ];
 
       document.getElementById("scorecards").innerHTML = scorecards
@@ -438,9 +822,11 @@
         "Mood: <strong>" + currentScenario.mood + "</strong>";
 
       document.getElementById("stateChanges").innerHTML =
-        "Trust: <strong>" + currentScenario.trustStart + " → " + currentScenario.trustEnd + "</strong><br>" +
-        "Defensiveness: <strong>" + currentScenario.defensiveStart + " → " + currentScenario.defensiveEnd + "</strong><br>" +
-        "Openness: <strong>" + currentScenario.opennessStart + " → " + currentScenario.opennessEnd + "</strong>";
+        "Trust: <strong>" + liveState.startTrust + " → " + liveState.trust + "</strong><br>" +
+        "Defensiveness: <strong>" + liveState.startDefensiveness + " → " + liveState.defensiveness + "</strong><br>" +
+        "Openness: <strong>" + liveState.startOpenness + " → " + liveState.openness + "</strong><br>" +
+        "Appointment Readiness: <strong>" + liveState.startAppointmentReadiness + " → " + liveState.appointmentReadiness + "</strong><br>" +
+        "Objective Progress: <strong>" + liveState.objectiveProgress + "%</strong>";
     }
 
     function setButtonsLive(live) {
@@ -550,10 +936,12 @@
 
             if (msg.type === "response.audio_transcript.done" && msg.transcript) {
               addLine("ai", msg.transcript);
+              analyzeSellerTurn(msg.transcript);
             }
 
             if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
               addLine("user", msg.transcript);
+              analyzeUserTurn(msg.transcript);
 
               const lower = msg.transcript.toLowerCase();
               if (lower.includes("saber score") || lower.includes("saber end")) {
@@ -660,6 +1048,7 @@
     });
 
     setButtonsLive(false);
+    updateLivePanel();
   </script>
 </body>
 </html>
