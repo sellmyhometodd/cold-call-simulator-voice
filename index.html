@@ -485,9 +485,6 @@
   </div>
 
   <audio id="remoteAudio" class="hidden-audio" autoplay playsinline></audio>
-  <audio id="ringtoneAudio" preload="auto">
-    <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/" type="audio/wav">
-  </audio>
 
   <script>
     let pc = null;
@@ -495,14 +492,15 @@
     let localStream = null;
     let currentScenario = null;
     let sessionLive = false;
+    let sessionStarting = false;
     let sellerName = "Seller";
+    let sellerHasSpokenFirst = false;
 
     const transcript = document.getElementById("transcript");
     const statusText = document.getElementById("statusText");
     const statusDot = document.getElementById("statusDot");
     const reviewSection = document.getElementById("reviewSection");
     const remoteAudio = document.getElementById("remoteAudio");
-    const ringtoneAudio = document.getElementById("ringtoneAudio");
 
     const liveState = {
       trust: 3,
@@ -520,16 +518,17 @@
       return Math.max(min, Math.min(max, val));
     }
 
-    function setStatus(mode) {
+    function setStatus(mode, customText = "") {
       statusDot.className = "dot";
+
       if (mode === "live") {
         statusDot.classList.add("live");
-        statusText.textContent = "Live";
+        statusText.textContent = customText || "Live";
       } else if (mode === "failed") {
         statusDot.classList.add("failed");
-        statusText.textContent = "Failed";
+        statusText.textContent = customText || "Failed";
       } else {
-        statusText.textContent = "Idle";
+        statusText.textContent = customText || "Idle";
       }
     }
 
@@ -539,6 +538,11 @@
       div.textContent = text;
       transcript.appendChild(div);
       transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    function resetTranscript() {
+      transcript.innerHTML = "";
+      addLine("system", "Press Start Voice Session and allow microphone access.");
     }
 
     function randomItem(arr) {
@@ -836,41 +840,80 @@
         "Objective Progress: <strong>" + liveState.objectiveProgress + "%</strong>";
     }
 
-    function setButtonsLive(live) {
-      document.getElementById("startBtn").disabled = live;
+    function setButtonsState(isLiveOrStarting) {
+      document.getElementById("startBtn").disabled = isLiveOrStarting;
+      document.getElementById("endBtn").disabled = !isLiveOrStarting;
+      document.getElementById("pauseBtn").disabled = !isLiveOrStarting;
+      document.getElementById("coachBtn").disabled = !isLiveOrStarting;
+      document.getElementById("resumeBtn").disabled = !isLiveOrStarting;
+      document.getElementById("scoreBtn").disabled = !isLiveOrStarting;
     }
 
-    function playRingOnce() {
-      return new Promise((resolve) => {
-        ringtoneAudio.pause();
-        ringtoneAudio.currentTime = 0;
-
-        let resolved = false;
-        const finish = () => {
-          if (resolved) return;
-          resolved = true;
-          resolve();
-        };
-
-        ringtoneAudio.addEventListener("ended", finish, { once: true });
-
-        ringtoneAudio.play().catch(() => {
-          finish();
-        });
-
-        setTimeout(finish, 1800);
+    function setMicEnabled(enabled) {
+      if (!localStream) return;
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = enabled;
       });
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function playRingOnce() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const durationMs = 1900;
+        const start = audioContext.currentTime;
+
+        const master = audioContext.createGain();
+        master.gain.setValueAtTime(0.06, start);
+        master.connect(audioContext.destination);
+
+        function addBurst(offset, duration) {
+          const osc1 = audioContext.createOscillator();
+          const osc2 = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+
+          osc1.type = "sine";
+          osc2.type = "sine";
+          osc1.frequency.setValueAtTime(440, start + offset);
+          osc2.frequency.setValueAtTime(480, start + offset);
+
+          gain.gain.setValueAtTime(0.0001, start + offset);
+          gain.gain.exponentialRampToValueAtTime(0.08, start + offset + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + duration);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(master);
+
+          osc1.start(start + offset);
+          osc2.start(start + offset);
+          osc1.stop(start + offset + duration);
+          osc2.stop(start + offset + duration);
+        }
+
+        addBurst(0.00, 0.38);
+        addBurst(0.55, 0.38);
+        addBurst(1.10, 0.38);
+
+        return new Promise(resolve => setTimeout(resolve, durationMs));
+      } catch (err) {
+        console.error("Ringtone failed:", err);
+        return wait(1800);
+      }
     }
 
     async function cleanupConnection() {
       try {
         if (dc) {
-          dc.close();
+          try { dc.close(); } catch (err) {}
           dc = null;
         }
 
         if (pc) {
-          pc.close();
+          try { pc.close(); } catch (err) {}
           pc = null;
         }
 
@@ -886,16 +929,61 @@
       }
 
       sessionLive = false;
+      sessionStarting = false;
+      sellerHasSpokenFirst = false;
+    }
+
+    function sendUserMessage(text, createResponse = true) {
+      if (!dc || dc.readyState !== "open") {
+        addLine("coach", "No live realtime channel.");
+        return;
+      }
+
+      dc.send(JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text
+            }
+          ]
+        }
+      }));
+
+      if (createResponse) {
+        dc.send(JSON.stringify({
+          type: "response.create",
+          response: {}
+        }));
+      }
+    }
+
+    function triggerSellerFirstTurn() {
+      if (!dc || dc.readyState !== "open") {
+        throw new Error("Realtime data channel is not open.");
+      }
+
+      addLine("system", sellerName + " is answering...");
+      setStatus("live", sellerName + " answering...");
+
+      sendUserMessage("PHONE_ANSWER_NOW", true);
     }
 
     async function startSession() {
-      if (sessionLive) return;
+      if (sessionLive || sessionStarting) return;
 
+      sessionStarting = true;
+      sessionLive = false;
+      sellerHasSpokenFirst = false;
+
+      resetTranscript();
       reviewSection.classList.remove("show");
       buildLocalScenario();
-      setStatus("live");
-      setButtonsLive(true);
-      addLine("system", "Requesting microphone and preparing call...");
+      setButtonsState(true);
+      setStatus("live", "Dialing...");
 
       const backendUrl = document.getElementById("backendUrl").value.trim();
       const payload = {
@@ -907,6 +995,10 @@
       };
 
       try {
+        addLine("system", "Dialing...");
+
+        const ringPromise = playRingOnce();
+
         localStream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -915,6 +1007,8 @@
           }
         });
 
+        setMicEnabled(false);
+
         const sessionResp = await fetch(backendUrl + "/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -922,24 +1016,21 @@
         });
 
         const sessionData = await sessionResp.json();
-        sellerName = sessionData.sellerName || "Seller";
-        document.getElementById("liveSellerName").textContent = sellerName;
 
         if (!sessionResp.ok) {
           console.error(sessionData);
           throw new Error("Failed to create realtime session: " + JSON.stringify(sessionData));
         }
 
-        const ephemeralKey = sessionData.value || null;
+        sellerName = sessionData.sellerName || "Seller";
+        document.getElementById("liveSellerName").textContent = sellerName;
+
+        const ephemeralKey = sessionData.client_secret?.value || sessionData.value || null;
 
         if (!ephemeralKey) {
           console.error(sessionData);
           throw new Error("No client secret returned from backend: " + JSON.stringify(sessionData));
         }
-
-        addLine("system", "Calling " + sellerName + "...");
-        await playRingOnce();
-        addLine("system", sellerName + " answered.");
 
         pc = new RTCPeerConnection();
 
@@ -955,38 +1046,66 @@
           pc.addTrack(track, localStream);
         });
 
-        dc = pc.createDataChannel("oai-events");
+        const dataChannelOpenPromise = new Promise((resolve, reject) => {
+          dc = pc.createDataChannel("oai-events");
 
-        dc.onopen = function() {
-          addLine("system", "Realtime voice connected.");
-        };
+          dc.onopen = function() {
+            addLine("system", "Realtime voice connected.");
+            resolve();
+          };
 
-        dc.onmessage = function(event) {
-          try {
-            const msg = JSON.parse(event.data);
+          dc.onerror = function(err) {
+            console.error("Data channel error:", err);
+          };
 
-            if (msg.type === "response.audio_transcript.done" && msg.transcript) {
-              addLine("ai", sellerName + ": " + msg.transcript);
-              analyzeSellerTurn(msg.transcript);
+          dc.onclose = function() {
+            if (sessionLive) {
+              addLine("system", "Realtime channel closed.");
             }
+          };
 
-            if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
-              addLine("user", "You: " + msg.transcript);
-              analyzeUserTurn(msg.transcript);
+          dc.onmessage = function(event) {
+            try {
+              const msg = JSON.parse(event.data);
 
-              const lower = msg.transcript.toLowerCase();
-              if (lower.includes("saber score") || lower.includes("saber end")) {
-                showReview();
+              if (msg.type === "response.audio_transcript.done" && msg.transcript) {
+                addLine("ai", sellerName + ": " + msg.transcript);
+                analyzeSellerTurn(msg.transcript);
+
+                if (!sellerHasSpokenFirst) {
+                  sellerHasSpokenFirst = true;
+                  setMicEnabled(true);
+                  addLine("system", sellerName + " spoke first. Your mic is live.");
+                  setStatus("live", "Your turn");
+                }
               }
-            }
 
-            if (msg.type === "error") {
-              addLine("coach", "Realtime error: " + JSON.stringify(msg.error));
+              if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+                if (!sellerHasSpokenFirst) return;
+
+                addLine("user", "You: " + msg.transcript);
+                analyzeUserTurn(msg.transcript);
+
+                const lower = msg.transcript.toLowerCase();
+                if (lower.includes("saber score") || lower.includes("saber end")) {
+                  showReview();
+                }
+              }
+
+              if (msg.type === "error") {
+                addLine("coach", "Realtime error: " + JSON.stringify(msg.error || msg));
+              }
+            } catch (err) {
+              console.error("Data channel parse error:", err);
             }
-          } catch (err) {
-            console.error("Data channel parse error:", err);
-          }
-        };
+          };
+
+          pc.onconnectionstatechange = function() {
+            if (pc.connectionState === "failed") {
+              reject(new Error("Peer connection failed."));
+            }
+          };
+        });
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -1012,36 +1131,20 @@
           sdp: answerSdp
         });
 
-       sessionLive = true;
+        await dataChannelOpenPromise;
+        await ringPromise;
 
-addLine("system", "Wait for " + sellerName + " to speak first...");
+        addLine("system", sellerName + " answered.");
+        await wait(300);
 
-setTimeout(() => {
-  if (dc && dc.readyState === "open") {
-    dc.send(JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: "PHONE_ANSWER_NOW"
-          }
-        ]
-      }
-    }));
+        sessionLive = true;
+        sessionStarting = false;
 
-    dc.send(JSON.stringify({
-      type: "response.create"
-    }));
-  }
-}, 400);
-        
+        triggerSellerFirstTurn();
       } catch (err) {
         console.error(err);
-        setStatus("failed");
-        setButtonsLive(false);
+        setStatus("failed", "Failed");
+        setButtonsState(false);
         addLine("coach", err.message || "Could not start realtime session.");
         await cleanupConnection();
       }
@@ -1049,8 +1152,8 @@ setTimeout(() => {
 
     async function endSession() {
       await cleanupConnection();
-      setStatus("idle");
-      setButtonsLive(false);
+      setStatus("idle", "Idle");
+      setButtonsState(false);
       addLine("system", "Session ended.");
       showReview();
     }
@@ -1061,24 +1164,7 @@ setTimeout(() => {
         return;
       }
 
-      dc.send(JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: text
-            }
-          ]
-        }
-      }));
-
-      dc.send(JSON.stringify({
-        type: "response.create"
-      }));
-
+      sendUserMessage(text, true);
       addLine("user", "You: [command] " + text);
     }
 
@@ -1092,17 +1178,17 @@ setTimeout(() => {
     document.getElementById("replayBtn").addEventListener("click", function() {
       addLine("system", "Replay selected.");
       reviewSection.classList.remove("show");
-      setStatus("idle");
+      setStatus("idle", "Idle");
     });
 
     document.getElementById("newBtn").addEventListener("click", function() {
       addLine("system", "New seller selected.");
       reviewSection.classList.remove("show");
       buildLocalScenario();
-      setStatus("idle");
+      setStatus("idle", "Idle");
     });
 
-    setButtonsLive(false);
+    setButtonsState(false);
     updateLivePanel();
   </script>
 </body>
