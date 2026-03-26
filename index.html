@@ -1,1102 +1,1085 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cold Call Simulator</title>
-<style>
-:root {
---bg: #0f1218;
---panel: #171b23;
---panel2: #1d2330;
---line: #2a3140;
---text: #f5f7fb;
---muted: #a8b0bd;
---accent: #df6827;
---good: #44c27a;
---warn: #f0b04f;
---bad: #e26464;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cold Call Simulator</title>
+  <style>
+    :root {
+      --bg: #0f1218;
+      --panel: #171b23;
+      --panel2: #1d2330;
+      --line: #2a3140;
+      --text: #f5f7fb;
+      --muted: #a8b0bd;
+      --accent: #df6827;
+      --good: #44c27a;
+      --warn: #f0b04f;
+      --bad: #e26464;
+    }
 
-* { box-sizing: border-box; }
+    * { box-sizing: border-box; }
 
-body {
-margin: 0;
-font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-background: linear-gradient(180deg, #0d1015, #131925);
-color: var(--text);
-padding: 12px;
-}
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0d1015, #131925);
+      color: var(--text);
+      padding: 12px;
+    }
 
-.wrap {
-max-width: 900px;
-margin: 0 auto;
-display: grid;
-gap: 12px;
-}
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
 
-.card {
-background: var(--panel);
-border: 1px solid var(--line);
-border-radius: 16px;
-padding: 14px;
-}
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
 
-h1, h2, h3, p { margin: 0; }
+    h1, h2, h3, p { margin: 0; }
 
-h1 {
-font-size: 24px;
-line-height: 1.1;
-}
+    h1 {
+      font-size: 24px;
+      line-height: 1.1;
+    }
 
-.sub {
-margin-top: 8px;
-color: var(--muted);
-font-size: 14px;
-line-height: 1.5;
-}
+    .sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
 
-label {
-display: block;
-margin-bottom: 6px;
-font-size: 12px;
-color: var(--muted);
-font-weight: 700;
-text-transform: uppercase;
-letter-spacing: .06em;
-}
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
 
-select, input, button {
-width: 100%;
-border-radius: 12px;
-border: 1px solid var(--line);
-background: var(--panel2);
-color: var(--text);
-padding: 12px 14px;
-font: inherit;
-}
+    select, input, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: var(--text);
+      padding: 12px 14px;
+      font: inherit;
+    }
 
-button { cursor: pointer; }
+    button { cursor: pointer; }
 
-button:disabled {
-opacity: .6;
-cursor: not-allowed;
-}
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
 
-.grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-}
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-.btn-primary {
-background: linear-gradient(180deg, #ef8448, var(--accent));
-border: none;
-font-weight: 700;
-}
+    .btn-primary {
+      background: linear-gradient(180deg, #ef8448, var(--accent));
+      border: none;
+      font-weight: 700;
+    }
 
-.btn-secondary {
-background: #232938;
-font-weight: 700;
-}
+    .btn-secondary {
+      background: #232938;
+      font-weight: 700;
+    }
 
-.status {
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 13px;
-color: var(--muted);
-font-weight: 700;
-}
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
 
-.dot {
-width: 10px;
-height: 10px;
-border-radius: 999px;
-background: var(--warn);
-}
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--warn);
+    }
 
-.dot.live { background: var(--good); }
-.dot.failed { background: var(--bad); }
+    .dot.live { background: var(--good); }
+    .dot.failed { background: var(--bad); }
 
-.main-layout {
-display: grid;
-grid-template-columns: 1.3fr .9fr;
-gap: 12px;
-}
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 12px;
+    }
 
-.transcript {
-height: 380px;
-overflow: auto;
-border: 1px solid var(--line);
-border-radius: 12px;
-background: #10141c;
-padding: 12px;
-margin-top: 12px;
-}
+    .transcript {
+      height: 420px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #10141c;
+      padding: 12px;
+      margin-top: 12px;
+    }
 
-.line {
-margin-bottom: 10px;
-line-height: 1.5;
-white-space: pre-wrap;
-font-size: 14px;
-}
+    .line {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
 
-.user { color: #ffd9c7; }
-.ai { color: #dbe2ef; }
-.coach { color: #8fe0b2; }
-.system { color: var(--muted); }
+    .user { color: #ffd9c7; }
+    .ai { color: #dbe2ef; }
+    .coach { color: #8fe0b2; }
+    .system { color: var(--muted); }
 
-.controls {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-margin-top: 12px;
-}
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
 
-.review {
-display: none;
-gap: 10px;
-}
+    .review {
+      display: none;
+      gap: 10px;
+    }
 
-.review.show {
-display: grid;
-}
+    .review.show {
+      display: grid;
+    }
 
-.review-grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-}
+    .review-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-.mini {
-background: #10141c;
-border: 1px solid var(--line);
-border-radius: 12px;
-padding: 12px;
-}
+    .mini {
+      background: #10141c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
 
-.mini h3 {
-font-size: 13px;
-margin-bottom: 8px;
-color: var(--muted);
-text-transform: uppercase;
-letter-spacing: .06em;
-}
+    .mini h3 {
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
 
-.score-list {
-display: grid;
-gap: 8px;
-}
+    .score-list {
+      display: grid;
+      gap: 8px;
+    }
 
-.small {
-font-size: 12px;
-color: var(--muted);
-line-height: 1.5;
-}
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
 
-.hidden-audio {
-position: absolute;
-width: 1px;
-height: 1px;
-opacity: 0;
-pointer-events: none;
-}
+    .hidden-audio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
 
-.live-panel {
-display: grid;
-gap: 10px;
-}
+    .live-panel {
+      display: grid;
+      gap: 10px;
+    }
 
-.metric {
-background: #10141c;
-border: 1px solid var(--line);
-border-radius: 12px;
-padding: 12px;
-}
+    .metric {
+      background: #10141c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
 
-.metric-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 8px;
-font-size: 13px;
-}
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
 
-.metric-label {
-color: var(--muted);
-text-transform: uppercase;
-letter-spacing: .05em;
-font-weight: 700;
-}
+    .metric-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+    }
 
-.metric-value {
-font-weight: 700;
-}
+    .metric-value {
+      font-weight: 700;
+    }
 
-.bar {
-width: 100%;
-height: 10px;
-background: #232938;
-border-radius: 999px;
-overflow: hidden;
-}
+    .bar {
+      width: 100%;
+      height: 10px;
+      background: #232938;
+      border-radius: 999px;
+      overflow: hidden;
+    }
 
-.bar-fill {
-height: 100%;
-width: 0%;
-transition: width .25s ease;
-}
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: width .25s ease;
+    }
 
-.fill-trust { background: var(--good); }
-.fill-defensive { background: var(--bad); }
-.fill-open { background: #6aa8ff; }
-.fill-appointment { background: #c985ff; }
-.fill-objective { background: var(--accent); }
+    .fill-trust { background: var(--good); }
+    .fill-defensive { background: var(--bad); }
+    .fill-open { background: #6aa8ff; }
+    .fill-appointment { background: #c985ff; }
+    .fill-objective { background: var(--accent); }
 
-.delta {
-font-size: 12px;
-margin-top: 6px;
-color: var(--muted);
-}
+    .delta {
+      font-size: 12px;
+      margin-top: 6px;
+      color: var(--muted);
+    }
 
-.objective-box {
-background: #10141c;
-border: 1px solid var(--line);
-border-radius: 12px;
-padding: 12px;
-}
+    .objective-box {
+      background: #10141c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
 
-.objective-box strong {
-display: block;
-margin-bottom: 6px;
-}
+    .objective-box strong {
+      display: block;
+      margin-bottom: 6px;
+    }
 
-@media (max-width: 900px) {
-.main-layout {
-grid-template-columns: 1fr;
-}
-}
+    @media (max-width: 900px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
 
-@media (max-width: 700px) {
-.grid, .controls, .review-grid {
-grid-template-columns: 1fr;
-}
-}
-</style>
+    @media (max-width: 700px) {
+      .grid, .controls, .review-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-<section class="card">
-<h1>Cold Call Simulator</h1>
-<p class="sub">
-Full Realtime voice version with live progress tracking.
-</p>
-</section>
+  <div class="wrap">
+    <section class="card">
+      <h1>Cold Call Simulator</h1>
+      <p class="sub">
+        Realtime voice version with ringtone, seller-first answer, and live progress tracking.
+      </p>
+    </section>
 
-<section class="card">
-<div class="grid">
-<div>
-<label for="leadType">Lead Type</label>
-<select id="leadType">
-<option>Expired</option>
-<option>FSBO</option>
-<option>Cancelled</option>
-<option>Divorce</option>
-<option>Landlord</option>
-<option>Absentee Owner</option>
-<option>Probate</option>
-<option>COI</option>
-</select>
-</div>
-<audio id="ringtoneAudio" preload="auto">
-  <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/" type="audio/wav">
-</audio>
-<div>
-<label for="difficulty">Difficulty</label>
-<select id="difficulty">
-<option>Easy</option>
-<option selected>Medium</option>
-<option>Hard</option>
-<option>Expert</option>
-</select>
-</div>
-</div>
+    <section class="card">
+      <div class="grid">
+        <div>
+          <label for="leadType">Lead Type</label>
+          <select id="leadType">
+            <option>Expired</option>
+            <option>FSBO</option>
+            <option>Cancelled</option>
+            <option>Divorce</option>
+            <option>Landlord</option>
+            <option>Absentee Owner</option>
+            <option>Probate</option>
+            <option>COI</option>
+          </select>
+        </div>
 
-<div class="grid" style="margin-top:10px;">
-<div>
-<label for="voiceType">Voice</label>
-<select id="voiceType">
-<option value="cedar" selected>Cedar</option>
-<option value="marin">Marin</option>
-<option value="ash">Ash</option>
-<option value="coral">Coral</option>
-<option value="alloy">Alloy</option>
-<option value="echo">Echo</option>
-<option value="sage">Sage</option>
-<option value="shimmer">Shimmer</option>
-<option value="verse">Verse</option>
-<option value="ballad">Ballad</option>
-</select>
-</div>
+        <div>
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option>Easy</option>
+            <option selected>Medium</option>
+            <option>Hard</option>
+            <option>Expert</option>
+          </select>
+        </div>
+      </div>
 
-<div>
-<label for="mode">Mode</label>
-<select id="mode">
-<option selected>Random Seller</option>
-<option>Manual</option>
-</select>
-</div>
-</div>
+      <div class="grid" style="margin-top:10px;">
+        <div>
+          <label for="voiceType">Voice</label>
+          <select id="voiceType">
+            <option value="cedar" selected>Cedar</option>
+            <option value="marin">Marin</option>
+            <option value="ash">Ash</option>
+            <option value="coral">Coral</option>
+            <option value="alloy">Alloy</option>
+            <option value="echo">Echo</option>
+            <option value="sage">Sage</option>
+            <option value="shimmer">Shimmer</option>
+            <option value="verse">Verse</option>
+            <option value="ballad">Ballad</option>
+          </select>
+        </div>
 
-<div style="margin-top:10px;">
-<label for="objectiveType">Call Objective</label>
-<select id="objectiveType">
-<option selected>First Contact</option>
-<option>Build Rapport</option>
-<option>Uncover Motivation</option>
-<option>Handle Objection</option>
-<option>Re-Engage</option>
-<option>Set Appointment</option>
-<option>Confirm Appointment</option>
-<option>Nurture Follow-Up</option>
-</select>
-</div>
+        <div>
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option selected>Random Seller</option>
+            <option>Manual</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="objectiveType">Call Objective</label>
+        <select id="objectiveType">
+          <option selected>First Contact</option>
+          <option>Build Rapport</option>
+          <option>Uncover Motivation</option>
+          <option>Handle Objection</option>
+          <option>Re-Engage</option>
+          <option>Set Appointment</option>
+          <option>Confirm Appointment</option>
+          <option>Nurture Follow-Up</option>
+        </select>
+      </div>
 
       <div style="margin-top:10px;">
         <label for="backendUrl">Railway Backend URL</label>
         <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
       </div>
 
-<div class="grid" style="margin-top:12px;">
-<button id="startBtn" class="btn-primary">Start Voice Session</button>
-<button id="endBtn" class="btn-secondary">End Session</button>
-</div>
-
-<div class="small" style="margin-top:10px;">
-Commands: <strong>Saber pause</strong>, <strong>Saber coach</strong>,
-<strong>Saber resume</strong>, <strong>Saber score</strong>, <strong>Saber end</strong>
-</div>
-</section>
-
-<div class="main-layout">
-<section class="card">
-<div class="status">
-<span id="statusDot" class="dot"></span>
-<span id="statusText">Idle</span>
-</div>
-
-      <div style="margin-top:10px;">
-        <label for="backendUrl">Railway Backend URL</label>
-        <input id="backendUrl" value="https://cold-call-simulator-backend-production.up.railway.app" />
+      <div class="grid" style="margin-top:12px;">
+        <button id="startBtn" class="btn-primary">Start Voice Session</button>
+        <button id="endBtn" class="btn-secondary">End Session</button>
       </div>
 
-        
-<div id="transcript" class="transcript">
-<div class="line system">Press Start Voice Session and allow microphone access.</div>
-</div>
+      <div class="small" style="margin-top:10px;">
+        Commands: <strong>Saber pause</strong>, <strong>Saber coach</strong>,
+        <strong>Saber resume</strong>, <strong>Saber score</strong>, <strong>Saber end</strong>
+      </div>
+    </section>
 
-<div class="controls">
-<button id="pauseBtn" class="btn-secondary">Saber Pause</button>
-<button id="coachBtn" class="btn-secondary">Saber Coach</button>
-<button id="resumeBtn" class="btn-secondary">Saber Resume</button>
-<button id="scoreBtn" class="btn-secondary">Saber Score</button>
-</div>
-</section>
+    <div class="main-layout">
+      <section class="card">
+        <div class="status">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Idle</span>
+        </div>
 
-<section class="card">
-<div class="live-panel">
-<div class="objective-box">
-<strong>Live Objective</strong>
-<div id="liveObjectiveText" class="small">No session started.</div>
-</div>
+        <div id="transcript" class="transcript">
+          <div class="line system">Press Start Voice Session and allow microphone access.</div>
+        </div>
+
+        <div class="controls">
+          <button id="pauseBtn" class="btn-secondary">Saber Pause</button>
+          <button id="coachBtn" class="btn-secondary">Saber Coach</button>
+          <button id="resumeBtn" class="btn-secondary">Saber Resume</button>
+          <button id="scoreBtn" class="btn-secondary">Saber Score</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="live-panel">
+          <div class="objective-box">
+            <strong>Live Objective</strong>
+            <div id="liveObjectiveText" class="small">No session started.</div>
+          </div>
 
           <div class="objective-box">
             <strong>Seller</strong>
             <div id="liveSellerName" class="small">Waiting for session...</div>
           </div>
 
-<div class="metric">
-<div class="metric-header">
-<span class="metric-label">Trust</span>
-<span id="trustValue" class="metric-value">3/10</span>
-</div>
-<div class="bar"><div id="trustBar" class="bar-fill fill-trust"></div></div>
-<div id="trustDelta" class="delta">Neutral</div>
-</div>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Trust</span>
+              <span id="trustValue" class="metric-value">3/10</span>
+            </div>
+            <div class="bar"><div id="trustBar" class="bar-fill fill-trust"></div></div>
+            <div id="trustDelta" class="delta">Neutral</div>
+          </div>
 
-<div class="metric">
-<div class="metric-header">
-<span class="metric-label">Defensiveness</span>
-<span id="defensiveValue" class="metric-value">5/10</span>
-</div>
-<div class="bar"><div id="defensiveBar" class="bar-fill fill-defensive"></div></div>
-<div id="defensiveDelta" class="delta">Neutral</div>
-</div>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Defensiveness</span>
+              <span id="defensiveValue" class="metric-value">5/10</span>
+            </div>
+            <div class="bar"><div id="defensiveBar" class="bar-fill fill-defensive"></div></div>
+            <div id="defensiveDelta" class="delta">Neutral</div>
+          </div>
 
-<div class="metric">
-<div class="metric-header">
-<span class="metric-label">Openness</span>
-<span id="openValue" class="metric-value">3/10</span>
-</div>
-<div class="bar"><div id="openBar" class="bar-fill fill-open"></div></div>
-<div id="openDelta" class="delta">Neutral</div>
-</div>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Openness</span>
+              <span id="openValue" class="metric-value">3/10</span>
+            </div>
+            <div class="bar"><div id="openBar" class="bar-fill fill-open"></div></div>
+            <div id="openDelta" class="delta">Neutral</div>
+          </div>
 
-<div class="metric">
-<div class="metric-header">
-<span class="metric-label">Appointment Readiness</span>
-<span id="appointmentValue" class="metric-value">1/10</span>
-</div>
-<div class="bar"><div id="appointmentBar" class="bar-fill fill-appointment"></div></div>
-<div id="appointmentDelta" class="delta">Neutral</div>
-</div>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Appointment Readiness</span>
+              <span id="appointmentValue" class="metric-value">1/10</span>
+            </div>
+            <div class="bar"><div id="appointmentBar" class="bar-fill fill-appointment"></div></div>
+            <div id="appointmentDelta" class="delta">Neutral</div>
+          </div>
 
-<div class="metric">
-<div class="metric-header">
-<span class="metric-label">Objective Progress</span>
-<span id="objectiveValue" class="metric-value">0%</span>
-</div>
-<div class="bar"><div id="objectiveBar" class="bar-fill fill-objective"></div></div>
-<div id="objectiveDelta" class="delta">Waiting for conversation</div>
-</div>
-</div>
-</section>
-</div>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Objective Progress</span>
+              <span id="objectiveValue" class="metric-value">0%</span>
+            </div>
+            <div class="bar"><div id="objectiveBar" class="bar-fill fill-objective"></div></div>
+            <div id="objectiveDelta" class="delta">Waiting for conversation</div>
+          </div>
+        </div>
+      </section>
+    </div>
 
-<section id="reviewSection" class="card review">
-<div class="review-grid">
-<div class="mini">
-<h3>Scorecards</h3>
-<div id="scorecards" class="score-list"></div>
-</div>
-<div class="mini">
-<h3>Blind Reveal</h3>
-<div id="blindReveal" class="small"></div>
-</div>
-</div>
+    <section id="reviewSection" class="card review">
+      <div class="review-grid">
+        <div class="mini">
+          <h3>Scorecards</h3>
+          <div id="scorecards" class="score-list"></div>
+        </div>
+        <div class="mini">
+          <h3>Blind Reveal</h3>
+          <div id="blindReveal" class="small"></div>
+        </div>
+      </div>
 
-<div class="review-grid">
-<div class="mini">
-<h3>State Changes</h3>
-<div id="stateChanges" class="small"></div>
-</div>
-<div class="mini">
-<h3>Replay</h3>
-<div class="controls" style="margin-top:0;">
-<button id="replayBtn" class="btn-secondary">Replay Same Seller</button>
-<button id="newBtn" class="btn-secondary">New Random Seller</button>
-</div>
-</div>
-</div>
-</section>
-</div>
+      <div class="review-grid">
+        <div class="mini">
+          <h3>State Changes</h3>
+          <div id="stateChanges" class="small"></div>
+        </div>
+        <div class="mini">
+          <h3>Replay</h3>
+          <div class="controls" style="margin-top:0;">
+            <button id="replayBtn" class="btn-secondary">Replay Same Seller</button>
+            <button id="newBtn" class="btn-secondary">New Random Seller</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-<audio id="remoteAudio" class="hidden-audio" autoplay playsinline></audio>
-<audio id="ringtoneAudio" preload="auto">
-  <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/" type="audio/wav">
-</audio>
-  
-<script>
-let pc = null;
-let dc = null;
-let localStream = null;
-let currentScenario = null;
-let sessionLive = false;
+  <audio id="remoteAudio" class="hidden-audio" autoplay playsinline></audio>
+  <audio id="ringtoneAudio" preload="auto">
+    <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/gICAgH9/f3+AgICAf39/f4CAgIB/f39/" type="audio/wav">
+  </audio>
+
+  <script>
+    let pc = null;
+    let dc = null;
+    let localStream = null;
+    let currentScenario = null;
+    let sessionLive = false;
     let sellerName = "Seller";
 
-const transcript = document.getElementById("transcript");
-const statusText = document.getElementById("statusText");
-const statusDot = document.getElementById("statusDot");
-const reviewSection = document.getElementById("reviewSection");
-const remoteAudio = document.getElementById("remoteAudio");
+    const transcript = document.getElementById("transcript");
+    const statusText = document.getElementById("statusText");
+    const statusDot = document.getElementById("statusDot");
+    const reviewSection = document.getElementById("reviewSection");
+    const remoteAudio = document.getElementById("remoteAudio");
+    const ringtoneAudio = document.getElementById("ringtoneAudio");
 
-const liveState = {
-trust: 3,
-defensiveness: 5,
-openness: 3,
-appointmentReadiness: 1,
-objectiveProgress: 0,
-startTrust: 3,
-startDefensiveness: 5,
-startOpenness: 3,
-startAppointmentReadiness: 1
-};
-
-function clamp(val, min, max) {
-return Math.max(min, Math.min(max, val));
-}
-
-function setStatus(mode) {
-statusDot.className = "dot";
-if (mode === "live") {
-statusDot.classList.add("live");
-statusText.textContent = "Live";
-} else if (mode === "failed") {
-statusDot.classList.add("failed");
-statusText.textContent = "Failed";
-} else {
-statusText.textContent = "Idle";
-}
-}
-
-function addLine(type, text) {
-const div = document.createElement("div");
-div.className = "line " + type;
-div.textContent = text;
-transcript.appendChild(div);
-transcript.scrollTop = transcript.scrollHeight;
-}
-
-function randomItem(arr) {
-return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function buildLocalScenario() {
-const leadType = document.getElementById("leadType").value;
-const objective = document.getElementById("objectiveType").value;
-
-currentScenario = {
-leadType: leadType,
-objective: objective,
-disc: randomItem(["D", "I", "S", "C"]),
-frustration: randomItem(["Low", "Medium", "High"]),
-motivation: randomItem(["Low", "Medium", "High"]),
-mood: randomItem(["Calm", "Skeptical", "Defensive", "Frustrated"])
-};
-
-const difficulty = document.getElementById("difficulty").value;
-
-liveState.trust = difficulty === "Easy" ? 4 : difficulty === "Expert" ? 1 : 3;
-liveState.defensiveness = difficulty === "Easy" ? 3 : difficulty === "Expert" ? 8 : 5;
-liveState.openness = 3;
-liveState.appointmentReadiness =
-objective === "Set Appointment" || objective === "Confirm Appointment" ? 3 : 1;
-liveState.objectiveProgress = 0;
-
-liveState.startTrust = liveState.trust;
-liveState.startDefensiveness = liveState.defensiveness;
-liveState.startOpenness = liveState.openness;
-liveState.startAppointmentReadiness = liveState.appointmentReadiness;
-
-      document.getElementById("liveObjectiveText").textContent =
-        `${objective} — ${leadType}`;
-      document.getElementById("liveObjectiveText").textContent = `${objective} — ${leadType}`;
-updateLivePanel();
-}
-
-const ringtoneAudio = document.getElementById("ringtoneAudio");
-
-function playRingOnce() {
-  return new Promise((resolve) => {
-    ringtoneAudio.currentTime = 0;
-
-    const done = () => {
-      ringtoneAudio.removeEventListener("ended", done);
-      resolve();
+    const liveState = {
+      trust: 3,
+      defensiveness: 5,
+      openness: 3,
+      appointmentReadiness: 1,
+      objectiveProgress: 0,
+      startTrust: 3,
+      startDefensiveness: 5,
+      startOpenness: 3,
+      startAppointmentReadiness: 1
     };
 
-    ringtoneAudio.addEventListener("ended", done, { once: true });
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
 
-    ringtoneAudio.play().catch(() => {
-      resolve();
-    });
+    function setStatus(mode) {
+      statusDot.className = "dot";
+      if (mode === "live") {
+        statusDot.classList.add("live");
+        statusText.textContent = "Live";
+      } else if (mode === "failed") {
+        statusDot.classList.add("failed");
+        statusText.textContent = "Failed";
+      } else {
+        statusText.textContent = "Idle";
+      }
+    }
 
-    setTimeout(() => {
-      resolve();
-    }, 1800);
-  });
-}
-  
-  function updateMetric(idPrefix, value, max, deltaText) {
-document.getElementById(idPrefix + "Value").textContent =
-idPrefix === "objective" ? `${value}%` : `${value}/${max}`;
+    function addLine(type, text) {
+      const div = document.createElement("div");
+      div.className = "line " + type;
+      div.textContent = text;
+      transcript.appendChild(div);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
 
-const width = idPrefix === "objective" ? value : (value / max) * 100;
-document.getElementById(idPrefix + "Bar").style.width = `${width}%`;
-document.getElementById(idPrefix + "Delta").textContent = deltaText;
-}
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
 
-function updateLivePanel() {
-updateMetric(
-"trust",
-liveState.trust,
-10,
-liveState.trust >= 7 ? "Strong rapport" : liveState.trust >= 4 ? "Building" : "Fragile"
-);
+    function buildLocalScenario() {
+      const leadType = document.getElementById("leadType").value;
+      const objective = document.getElementById("objectiveType").value;
+      const difficulty = document.getElementById("difficulty").value;
 
-updateMetric(
-"defensive",
-liveState.defensiveness,
-10,
-liveState.defensiveness >= 7 ? "High resistance" : liveState.defensiveness >= 4 ? "Guarded" : "Relaxed"
-);
+      currentScenario = {
+        leadType,
+        objective,
+        disc: randomItem(["D", "I", "S", "C"]),
+        frustration: randomItem(["Low", "Medium", "High"]),
+        motivation: randomItem(["Low", "Medium", "High"]),
+        mood: randomItem(["Calm", "Skeptical", "Defensive", "Frustrated"])
+      };
 
-updateMetric(
-"open",
-liveState.openness,
-10,
-liveState.openness >= 7 ? "Seller is revealing more" : liveState.openness >= 4 ? "Some openness" : "Closed off"
-);
+      liveState.trust = difficulty === "Easy" ? 4 : difficulty === "Expert" ? 1 : 3;
+      liveState.defensiveness = difficulty === "Easy" ? 3 : difficulty === "Expert" ? 8 : 5;
+      liveState.openness = 3;
+      liveState.appointmentReadiness =
+        objective === "Set Appointment" || objective === "Confirm Appointment" ? 3 : 1;
+      liveState.objectiveProgress = 0;
 
-updateMetric(
-"appointment",
-liveState.appointmentReadiness,
-10,
-liveState.appointmentReadiness >= 7 ? "Strong close window" : liveState.appointmentReadiness >= 4 ? "Possible if handled well" : "Too early"
-);
+      liveState.startTrust = liveState.trust;
+      liveState.startDefensiveness = liveState.defensiveness;
+      liveState.startOpenness = liveState.openness;
+      liveState.startAppointmentReadiness = liveState.appointmentReadiness;
 
-updateMetric(
-"objective",
-liveState.objectiveProgress,
-100,
-liveState.objectiveProgress >= 70 ? "Objective advancing well" : liveState.objectiveProgress >= 40 ? "Partial progress" : "Needs work"
-);
-}
+      document.getElementById("liveObjectiveText").textContent = `${objective} — ${leadType}`;
+      updateLivePanel();
+    }
 
-function applyStateChange(changes) {
-if (typeof changes.trust === "number") {
-liveState.trust = clamp(liveState.trust + changes.trust, 1, 10);
-}
-if (typeof changes.defensiveness === "number") {
-liveState.defensiveness = clamp(liveState.defensiveness + changes.defensiveness, 1, 10);
-}
-if (typeof changes.openness === "number") {
-liveState.openness = clamp(liveState.openness + changes.openness, 1, 10);
-}
-if (typeof changes.appointmentReadiness === "number") {
-liveState.appointmentReadiness = clamp(liveState.appointmentReadiness + changes.appointmentReadiness, 1, 10);
-}
-if (typeof changes.objectiveProgress === "number") {
-liveState.objectiveProgress = clamp(liveState.objectiveProgress + changes.objectiveProgress, 0, 100);
-}
-updateLivePanel();
-}
+    function updateMetric(idPrefix, value, max, deltaText) {
+      document.getElementById(idPrefix + "Value").textContent =
+        idPrefix === "objective" ? `${value}%` : `${value}/${max}`;
 
-function analyzeUserTurn(text) {
-const t = text.toLowerCase();
-const objective = document.getElementById("objectiveType").value;
+      const width = idPrefix === "objective" ? value : (value / max) * 100;
+      document.getElementById(idPrefix + "Bar").style.width = `${width}%`;
+      document.getElementById(idPrefix + "Delta").textContent = deltaText;
+    }
 
-let changes = {
-trust: 0,
-defensiveness: 0,
-openness: 0,
-appointmentReadiness: 0,
-objectiveProgress: 0
-};
+    function updateLivePanel() {
+      updateMetric(
+        "trust",
+        liveState.trust,
+        10,
+        liveState.trust >= 7 ? "Strong rapport" : liveState.trust >= 4 ? "Building" : "Fragile"
+      );
 
-const hasOpenQuestion =
-t.includes("what") ||
-t.includes("how") ||
-t.includes("why") ||
-t.includes("tell me") ||
-t.includes("walk me through");
+      updateMetric(
+        "defensive",
+        liveState.defensiveness,
+        10,
+        liveState.defensiveness >= 7 ? "High resistance" : liveState.defensiveness >= 4 ? "Guarded" : "Relaxed"
+      );
 
-const hasValidation =
-t.includes("i understand") ||
-t.includes("that makes sense") ||
-t.includes("i can see") ||
-t.includes("sounds like") ||
-t.includes("i hear you");
+      updateMetric(
+        "open",
+        liveState.openness,
+        10,
+        liveState.openness >= 7 ? "Seller is revealing more" : liveState.openness >= 4 ? "Some openness" : "Closed off"
+      );
 
-const tooPushy =
-t.includes("can i come over") ||
-t.includes("let's set an appointment") ||
-t.includes("when can we meet") ||
-t.includes("are you ready to list") ||
-t.includes("sign");
+      updateMetric(
+        "appointment",
+        liveState.appointmentReadiness,
+        10,
+        liveState.appointmentReadiness >= 7 ? "Strong close window" : liveState.appointmentReadiness >= 4 ? "Possible if handled well" : "Too early"
+      );
 
-const genericAgentTalk =
-t.includes("market analysis") ||
-t.includes("i'd love the opportunity") ||
-t.includes("top agent") ||
-t.includes("i can help sell your home");
+      updateMetric(
+        "objective",
+        liveState.objectiveProgress,
+        100,
+        liveState.objectiveProgress >= 70 ? "Objective advancing well" : liveState.objectiveProgress >= 40 ? "Partial progress" : "Needs work"
+      );
+    }
 
-const curiosity =
-t.includes("what happened") ||
-t.includes("what was frustrating") ||
-t.includes("what went wrong") ||
-t.includes("what are you hoping") ||
-t.includes("what's your plan");
+    function applyStateChange(changes) {
+      if (typeof changes.trust === "number") {
+        liveState.trust = clamp(liveState.trust + changes.trust, 1, 10);
+      }
+      if (typeof changes.defensiveness === "number") {
+        liveState.defensiveness = clamp(liveState.defensiveness + changes.defensiveness, 1, 10);
+      }
+      if (typeof changes.openness === "number") {
+        liveState.openness = clamp(liveState.openness + changes.openness, 1, 10);
+      }
+      if (typeof changes.appointmentReadiness === "number") {
+        liveState.appointmentReadiness = clamp(liveState.appointmentReadiness + changes.appointmentReadiness, 1, 10);
+      }
+      if (typeof changes.objectiveProgress === "number") {
+        liveState.objectiveProgress = clamp(liveState.objectiveProgress + changes.objectiveProgress, 0, 100);
+      }
+      updateLivePanel();
+    }
 
-if (hasOpenQuestion) {
-changes.trust += 1;
-changes.openness += 1;
-changes.objectiveProgress += 6;
-}
+    function analyzeUserTurn(text) {
+      const t = text.toLowerCase();
+      const objective = document.getElementById("objectiveType").value;
 
-if (hasValidation) {
-changes.trust += 1;
-changes.defensiveness -= 1;
-changes.objectiveProgress += 5;
-}
+      const changes = {
+        trust: 0,
+        defensiveness: 0,
+        openness: 0,
+        appointmentReadiness: 0,
+        objectiveProgress: 0
+      };
 
-if (curiosity) {
-changes.trust += 1;
-changes.openness += 1;
-changes.objectiveProgress += 8;
-}
+      const hasOpenQuestion =
+        t.includes("what") ||
+        t.includes("how") ||
+        t.includes("why") ||
+        t.includes("tell me") ||
+        t.includes("walk me through");
 
-if (tooPushy) {
-changes.defensiveness += 2;
-changes.trust -= 1;
-changes.appointmentReadiness -= 2;
-changes.objectiveProgress -= 8;
-}
+      const hasValidation =
+        t.includes("i understand") ||
+        t.includes("that makes sense") ||
+        t.includes("i can see") ||
+        t.includes("sounds like") ||
+        t.includes("i hear you");
 
-if (genericAgentTalk) {
-changes.defensiveness += 1;
-changes.trust -= 1;
-changes.objectiveProgress -= 5;
-}
+      const tooPushy =
+        t.includes("can i come over") ||
+        t.includes("let's set an appointment") ||
+        t.includes("when can we meet") ||
+        t.includes("are you ready to list") ||
+        t.includes("sign");
 
-if (objective === "Set Appointment" && (t.includes("meet") || t.includes("appointment"))) {
-changes.objectiveProgress += 10;
-if (liveState.trust >= 5) {
-changes.appointmentReadiness += 1;
-}
-}
+      const genericAgentTalk =
+        t.includes("market analysis") ||
+        t.includes("i'd love the opportunity") ||
+        t.includes("top agent") ||
+        t.includes("i can help sell your home");
 
-if (objective === "Build Rapport" && (hasValidation || curiosity)) {
-changes.objectiveProgress += 6;
-}
+      const curiosity =
+        t.includes("what happened") ||
+        t.includes("what was frustrating") ||
+        t.includes("what went wrong") ||
+        t.includes("what are you hoping") ||
+        t.includes("what's your plan");
 
-if (objective === "Handle Objection" && (t.includes("understand") || t.includes("fair") || t.includes("makes sense"))) {
-changes.objectiveProgress += 7;
-}
+      if (hasOpenQuestion) {
+        changes.trust += 1;
+        changes.openness += 1;
+        changes.objectiveProgress += 6;
+      }
 
-if (objective === "Uncover Motivation" && hasOpenQuestion) {
-changes.objectiveProgress += 8;
-}
+      if (hasValidation) {
+        changes.trust += 1;
+        changes.defensiveness -= 1;
+        changes.objectiveProgress += 5;
+      }
 
-applyStateChange(changes);
-}
+      if (curiosity) {
+        changes.trust += 1;
+        changes.openness += 1;
+        changes.objectiveProgress += 8;
+      }
 
-function analyzeSellerTurn(text) {
-const t = text.toLowerCase();
+      if (tooPushy) {
+        changes.defensiveness += 2;
+        changes.trust -= 1;
+        changes.appointmentReadiness -= 2;
+        changes.objectiveProgress -= 8;
+      }
 
-let changes = {
-trust: 0,
-defensiveness: 0,
-openness: 0,
-appointmentReadiness: 0,
-objectiveProgress: 0
-};
+      if (genericAgentTalk) {
+        changes.defensiveness += 1;
+        changes.trust -= 1;
+        changes.objectiveProgress -= 5;
+      }
 
-const wordCount = t.split(/\s+/).filter(Boolean).length;
+      if (objective === "Set Appointment" && (t.includes("meet") || t.includes("appointment"))) {
+        changes.objectiveProgress += 10;
+        if (liveState.trust >= 5) {
+          changes.appointmentReadiness += 1;
+        }
+      }
 
-if (wordCount >= 14) {
-changes.openness += 1;
-changes.trust += 1;
-changes.objectiveProgress += 6;
-} else if (wordCount <= 4) {
-changes.defensiveness += 1;
-}
+      if (objective === "Build Rapport" && (hasValidation || curiosity)) {
+        changes.objectiveProgress += 6;
+      }
 
-const resistantPhrases = [
-"not interested",
-"we're going to wait",
-"same agent",
-"not paying commission",
-"not in a rush",
-"not right now",
-"we're fine",
-"call me later"
-];
+      if (objective === "Handle Objection" && (t.includes("understand") || t.includes("fair") || t.includes("makes sense"))) {
+        changes.objectiveProgress += 7;
+      }
 
-const openPhrases = [
-"honestly",
-"the problem was",
-"what happened was",
-"we were thinking",
-"we might",
-"i've been considering",
-"frustrating"
-];
+      if (objective === "Uncover Motivation" && hasOpenQuestion) {
+        changes.objectiveProgress += 8;
+      }
 
-if (resistantPhrases.some(p => t.includes(p))) {
-changes.defensiveness += 1;
-changes.appointmentReadiness -= 1;
-changes.objectiveProgress -= 4;
-}
+      applyStateChange(changes);
+    }
 
-if (openPhrases.some(p => t.includes(p))) {
-changes.openness += 1;
-changes.trust += 1;
-changes.objectiveProgress += 8;
-}
+    function analyzeSellerTurn(text) {
+      const t = text.toLowerCase();
 
-if (t.includes("maybe") || t.includes("possibly") || t.includes("we'll see")) {
-changes.appointmentReadiness += 1;
-}
+      const changes = {
+        trust: 0,
+        defensiveness: 0,
+        openness: 0,
+        appointmentReadiness: 0,
+        objectiveProgress: 0
+      };
 
-applyStateChange(changes);
-}
+      const wordCount = t.split(/\s+/).filter(Boolean).length;
 
-function showReview() {
-if (!currentScenario) return;
+      if (wordCount >= 14) {
+        changes.openness += 1;
+        changes.trust += 1;
+        changes.objectiveProgress += 6;
+      } else if (wordCount <= 4) {
+        changes.defensiveness += 1;
+      }
 
-reviewSection.classList.add("show");
+      const resistantPhrases = [
+        "not interested",
+        "we're going to wait",
+        "same agent",
+        "not paying commission",
+        "not in a rush",
+        "not right now",
+        "we're fine",
+        "call me later"
+      ];
 
-const scorecards = [
-["Opening", `${clamp(Math.round((liveState.trust + (10 - liveState.defensiveness)) / 2), 1, 10)}/10`],
-["Rapport", `${liveState.trust}/10`],
-["Control", `${clamp(10 - Math.abs(liveState.defensiveness - 5), 1, 10)}/10`],
-["Question Quality", `${clamp(liveState.openness, 1, 10)}/10`],
-["Objection Handling", `${clamp(10 - liveState.defensiveness + 2, 1, 10)}/10`],
-["Objective Execution", `${Math.max(1, Math.round(liveState.objectiveProgress / 10))}/10`],
-["Appointment Positioning", `${liveState.appointmentReadiness}/10`]
-];
+      const openPhrases = [
+        "honestly",
+        "the problem was",
+        "what happened was",
+        "we were thinking",
+        "we might",
+        "i've been considering",
+        "frustrating"
+      ];
 
-document.getElementById("scorecards").innerHTML = scorecards
-.map(function(pair) {
-return "<div>" + pair[0] + ": <strong>" + pair[1] + "</strong></div>";
-})
-.join("");
+      if (resistantPhrases.some(p => t.includes(p))) {
+        changes.defensiveness += 1;
+        changes.appointmentReadiness -= 1;
+        changes.objectiveProgress -= 4;
+      }
 
-document.getElementById("blindReveal").innerHTML =
+      if (openPhrases.some(p => t.includes(p))) {
+        changes.openness += 1;
+        changes.trust += 1;
+        changes.objectiveProgress += 8;
+      }
+
+      if (t.includes("maybe") || t.includes("possibly") || t.includes("we'll see")) {
+        changes.appointmentReadiness += 1;
+      }
+
+      applyStateChange(changes);
+    }
+
+    function showReview() {
+      if (!currentScenario) return;
+
+      reviewSection.classList.add("show");
+
+      const scorecards = [
+        ["Opening", `${clamp(Math.round((liveState.trust + (10 - liveState.defensiveness)) / 2), 1, 10)}/10`],
+        ["Rapport", `${liveState.trust}/10`],
+        ["Control", `${clamp(10 - Math.abs(liveState.defensiveness - 5), 1, 10)}/10`],
+        ["Question Quality", `${clamp(liveState.openness, 1, 10)}/10`],
+        ["Objection Handling", `${clamp(10 - liveState.defensiveness + 2, 1, 10)}/10`],
+        ["Objective Execution", `${Math.max(1, Math.round(liveState.objectiveProgress / 10))}/10`],
+        ["Appointment Positioning", `${liveState.appointmentReadiness}/10`]
+      ];
+
+      document.getElementById("scorecards").innerHTML = scorecards
+        .map(pair => "<div>" + pair[0] + ": <strong>" + pair[1] + "</strong></div>")
+        .join("");
+
+      document.getElementById("blindReveal").innerHTML =
         "Seller: <strong>" + sellerName + "</strong><br>" +
-"Lead Type: <strong>" + currentScenario.leadType + "</strong><br>" +
-"Objective: <strong>" + currentScenario.objective + "</strong><br>" +
-"DISC: <strong>" + currentScenario.disc + "</strong><br>" +
-"Frustration: <strong>" + currentScenario.frustration + "</strong><br>" +
-"Motivation: <strong>" + currentScenario.motivation + "</strong><br>" +
-"Mood: <strong>" + currentScenario.mood + "</strong>";
+        "Lead Type: <strong>" + currentScenario.leadType + "</strong><br>" +
+        "Objective: <strong>" + currentScenario.objective + "</strong><br>" +
+        "DISC: <strong>" + currentScenario.disc + "</strong><br>" +
+        "Frustration: <strong>" + currentScenario.frustration + "</strong><br>" +
+        "Motivation: <strong>" + currentScenario.motivation + "</strong><br>" +
+        "Mood: <strong>" + currentScenario.mood + "</strong>";
 
-document.getElementById("stateChanges").innerHTML =
-"Trust: <strong>" + liveState.startTrust + " → " + liveState.trust + "</strong><br>" +
-"Defensiveness: <strong>" + liveState.startDefensiveness + " → " + liveState.defensiveness + "</strong><br>" +
-"Openness: <strong>" + liveState.startOpenness + " → " + liveState.openness + "</strong><br>" +
-"Appointment Readiness: <strong>" + liveState.startAppointmentReadiness + " → " + liveState.appointmentReadiness + "</strong><br>" +
-"Objective Progress: <strong>" + liveState.objectiveProgress + "%</strong>";
-}
+      document.getElementById("stateChanges").innerHTML =
+        "Trust: <strong>" + liveState.startTrust + " → " + liveState.trust + "</strong><br>" +
+        "Defensiveness: <strong>" + liveState.startDefensiveness + " → " + liveState.defensiveness + "</strong><br>" +
+        "Openness: <strong>" + liveState.startOpenness + " → " + liveState.openness + "</strong><br>" +
+        "Appointment Readiness: <strong>" + liveState.startAppointmentReadiness + " → " + liveState.appointmentReadiness + "</strong><br>" +
+        "Objective Progress: <strong>" + liveState.objectiveProgress + "%</strong>";
+    }
 
-function setButtonsLive(live) {
-document.getElementById("startBtn").disabled = live;
-}
+    function setButtonsLive(live) {
+      document.getElementById("startBtn").disabled = live;
+    }
 
-async function cleanupConnection() {
-try {
-if (dc) {
-dc.close();
-dc = null;
-}
+    function playRingOnce() {
+      return new Promise((resolve) => {
+        ringtoneAudio.pause();
+        ringtoneAudio.currentTime = 0;
 
-if (pc) {
-pc.close();
-pc = null;
-}
+        let resolved = false;
+        const finish = () => {
+          if (resolved) return;
+          resolved = true;
+          resolve();
+        };
 
-if (localStream) {
-localStream.getTracks().forEach(function(track) {
-track.stop();
-});
-localStream = null;
-}
+        ringtoneAudio.addEventListener("ended", finish, { once: true });
 
-remoteAudio.pause();
-remoteAudio.srcObject = null;
-} catch (err) {
-console.error("Cleanup error:", err);
-}
+        ringtoneAudio.play().catch(() => {
+          finish();
+        });
 
-sessionLive = false;
-}
+        setTimeout(finish, 1800);
+      });
+    }
 
-async function startSession() {
-if (sessionLive) return;
+    async function cleanupConnection() {
+      try {
+        if (dc) {
+          dc.close();
+          dc = null;
+        }
 
-reviewSection.classList.remove("show");
-buildLocalScenario();
-setStatus("live");
-setButtonsLive(true);
-addLine("system", "Requesting microphone and creating realtime session...");
+        if (pc) {
+          pc.close();
+          pc = null;
+        }
 
-const backendUrl = document.getElementById("backendUrl").value.trim();
-const payload = {
-leadType: document.getElementById("leadType").value,
-difficulty: document.getElementById("difficulty").value,
-mode: document.getElementById("mode").value,
-objective: document.getElementById("objectiveType").value,
-voice: document.getElementById("voiceType").value
-};
+        if (localStream) {
+          localStream.getTracks().forEach(track => track.stop());
+          localStream = null;
+        }
 
-try {
-localStream = await navigator.mediaDevices.getUserMedia({
-audio: {
-echoCancellation: true,
-noiseSuppression: true,
-autoGainControl: true
-}
-});
+        remoteAudio.pause();
+        remoteAudio.srcObject = null;
+      } catch (err) {
+        console.error("Cleanup error:", err);
+      }
 
-const sessionResp = await fetch(backendUrl + "/session", {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify(payload)
-});
+      sessionLive = false;
+    }
 
-const sessionData = await sessionResp.json();
+    async function startSession() {
+      if (sessionLive) return;
+
+      reviewSection.classList.remove("show");
+      buildLocalScenario();
+      setStatus("live");
+      setButtonsLive(true);
+      addLine("system", "Requesting microphone and preparing call...");
+
+      const backendUrl = document.getElementById("backendUrl").value.trim();
+      const payload = {
+        leadType: document.getElementById("leadType").value,
+        difficulty: document.getElementById("difficulty").value,
+        mode: document.getElementById("mode").value,
+        objective: document.getElementById("objectiveType").value,
+        voice: document.getElementById("voiceType").value
+      };
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+
+        const sessionResp = await fetch(backendUrl + "/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const sessionData = await sessionResp.json();
         sellerName = sessionData.sellerName || "Seller";
         document.getElementById("liveSellerName").textContent = sellerName;
 
-console.log("Session data from backend:", sessionData);
-addLine("system", "Session response received from backend.");
+        if (!sessionResp.ok) {
+          console.error(sessionData);
+          throw new Error("Failed to create realtime session: " + JSON.stringify(sessionData));
+        }
 
-if (!sessionResp.ok) {
-console.error(sessionData);
-throw new Error("Failed to create realtime session: " + JSON.stringify(sessionData));
-}
+        const ephemeralKey = sessionData.value || null;
 
-const ephemeralKey = sessionData.value || null;
+        if (!ephemeralKey) {
+          console.error(sessionData);
+          throw new Error("No client secret returned from backend: " + JSON.stringify(sessionData));
+        }
 
-if (!ephemeralKey) {
-console.error(sessionData);
-throw new Error("No client secret returned from backend: " + JSON.stringify(sessionData));
-}
+        addLine("system", "Calling " + sellerName + "...");
+        await playRingOnce();
+        addLine("system", sellerName + " answered.");
 
-pc = new RTCPeerConnection();
+        pc = new RTCPeerConnection();
 
-pc.ontrack = function(event) {
-remoteAudio.srcObject = event.streams[0];
-remoteAudio.play().catch(function(err) {
-console.error("Remote audio play failed:", err);
-addLine("coach", "Audio playback was blocked by the browser.");
-});
-};
+        pc.ontrack = function(event) {
+          remoteAudio.srcObject = event.streams[0];
+          remoteAudio.play().catch(function(err) {
+            console.error("Remote audio play failed:", err);
+            addLine("coach", "Audio playback was blocked by the browser.");
+          });
+        };
 
-localStream.getTracks().forEach(function(track) {
-pc.addTrack(track, localStream);
-});
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
 
-dc = pc.createDataChannel("oai-events");
+        dc = pc.createDataChannel("oai-events");
 
-dc.onopen = function() {
-addLine("system", "Realtime voice connected.");
-};
+        dc.onopen = function() {
+          addLine("system", "Realtime voice connected.");
+        };
 
-dc.onmessage = function(event) {
-try {
-const msg = JSON.parse(event.data);
+        dc.onmessage = function(event) {
+          try {
+            const msg = JSON.parse(event.data);
 
-if (msg.type === "response.audio_transcript.done" && msg.transcript) {
-              addLine("ai", msg.transcript);
+            if (msg.type === "response.audio_transcript.done" && msg.transcript) {
               addLine("ai", sellerName + ": " + msg.transcript);
-analyzeSellerTurn(msg.transcript);
-}
+              analyzeSellerTurn(msg.transcript);
+            }
 
-if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
-              addLine("user", msg.transcript);
+            if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
               addLine("user", "You: " + msg.transcript);
-analyzeUserTurn(msg.transcript);
+              analyzeUserTurn(msg.transcript);
 
-const lower = msg.transcript.toLowerCase();
-if (lower.includes("saber score") || lower.includes("saber end")) {
-showReview();
-}
-}
+              const lower = msg.transcript.toLowerCase();
+              if (lower.includes("saber score") || lower.includes("saber end")) {
+                showReview();
+              }
+            }
 
-if (msg.type === "error") {
-addLine("coach", "Realtime error: " + JSON.stringify(msg.error));
-}
-} catch (err) {
-console.error("Data channel parse error:", err);
-}
-};
+            if (msg.type === "error") {
+              addLine("coach", "Realtime error: " + JSON.stringify(msg.error));
+            }
+          } catch (err) {
+            console.error("Data channel parse error:", err);
+          }
+        };
 
-const offer = await pc.createOffer();
-await pc.setLocalDescription(offer);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
 
-const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
-method: "POST",
-body: offer.sdp,
-headers: {
-Authorization: "Bearer " + ephemeralKey,
-"Content-Type": "application/sdp"
-}
-});
+        const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: "Bearer " + ephemeralKey,
+            "Content-Type": "application/sdp"
+          }
+        });
 
-if (!sdpResp.ok) {
-const text = await sdpResp.text();
-throw new Error("Realtime SDP handshake failed: " + text);
-}
+        if (!sdpResp.ok) {
+          const text = await sdpResp.text();
+          throw new Error("Realtime SDP handshake failed: " + text);
+        }
 
-const answerSdp = await sdpResp.text();
+        const answerSdp = await sdpResp.text();
 
-await pc.setRemoteDescription({
-type: "answer",
-sdp: answerSdp
-});
+        await pc.setRemoteDescription({
+          type: "answer",
+          sdp: answerSdp
+        });
 
-sessionLive = true;
-addLine("system", "Live session started.");
-} catch (err) {
-console.error(err);
-setStatus("failed");
-setButtonsLive(false);
-addLine("coach", err.message || "Could not start realtime session.");
-await cleanupConnection();
-}
-}
+        sessionLive = true;
+        addLine("system", "Wait for " + sellerName + " to speak first.");
+      } catch (err) {
+        console.error(err);
+        setStatus("failed");
+        setButtonsLive(false);
+        addLine("coach", err.message || "Could not start realtime session.");
+        await cleanupConnection();
+      }
+    }
 
-async function endSession() {
-await cleanupConnection();
-setStatus("idle");
-setButtonsLive(false);
-addLine("system", "Session ended.");
-showReview();
-}
+    async function endSession() {
+      await cleanupConnection();
+      setStatus("idle");
+      setButtonsLive(false);
+      addLine("system", "Session ended.");
+      showReview();
+    }
 
-function sendCommand(text) {
-if (!dc || dc.readyState !== "open") {
-addLine("coach", "No live realtime channel.");
-return;
-}
+    function sendCommand(text) {
+      if (!dc || dc.readyState !== "open") {
+        addLine("coach", "No live realtime channel.");
+        return;
+      }
 
-dc.send(JSON.stringify({
-type: "conversation.item.create",
-item: {
-type: "message",
-role: "user",
-content: [
-{
-type: "input_text",
-text: text
-}
-]
-}
-}));
+      dc.send(JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: text
+            }
+          ]
+        }
+      }));
 
-dc.send(JSON.stringify({
-type: "response.create"
-}));
+      dc.send(JSON.stringify({
+        type: "response.create"
+      }));
 
-      addLine("user", "[command] " + text);
       addLine("user", "You: [command] " + text);
-}
+    }
 
-document.getElementById("startBtn").addEventListener("click", startSession);
-document.getElementById("endBtn").addEventListener("click", endSession);
-document.getElementById("pauseBtn").addEventListener("click", function() { sendCommand("Saber pause"); });
-document.getElementById("coachBtn").addEventListener("click", function() { sendCommand("Saber coach"); });
-document.getElementById("resumeBtn").addEventListener("click", function() { sendCommand("Saber resume"); });
-document.getElementById("scoreBtn").addEventListener("click", function() { sendCommand("Saber score"); });
+    document.getElementById("startBtn").addEventListener("click", startSession);
+    document.getElementById("endBtn").addEventListener("click", endSession);
+    document.getElementById("pauseBtn").addEventListener("click", function() { sendCommand("Saber pause"); });
+    document.getElementById("coachBtn").addEventListener("click", function() { sendCommand("Saber coach"); });
+    document.getElementById("resumeBtn").addEventListener("click", function() { sendCommand("Saber resume"); });
+    document.getElementById("scoreBtn").addEventListener("click", function() { sendCommand("Saber score"); });
 
-document.getElementById("replayBtn").addEventListener("click", function() {
-addLine("system", "Replay selected.");
-reviewSection.classList.remove("show");
-setStatus("idle");
-});
+    document.getElementById("replayBtn").addEventListener("click", function() {
+      addLine("system", "Replay selected.");
+      reviewSection.classList.remove("show");
+      setStatus("idle");
+    });
 
-document.getElementById("newBtn").addEventListener("click", function() {
-addLine("system", "New seller selected.");
-reviewSection.classList.remove("show");
-buildLocalScenario();
-setStatus("idle");
-});
+    document.getElementById("newBtn").addEventListener("click", function() {
+      addLine("system", "New seller selected.");
+      reviewSection.classList.remove("show");
+      buildLocalScenario();
+      setStatus("idle");
+    });
 
-setButtonsLive(false);
-updateLivePanel();
-</script>
+    setButtonsLive(false);
+    updateLivePanel();
+  </script>
 </body>
 </html>
